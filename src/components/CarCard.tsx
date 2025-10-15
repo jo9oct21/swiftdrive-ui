@@ -3,61 +3,97 @@ import { Star, Users, Gauge, Fuel } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Car } from '@/types/Car';
+import { motion } from 'framer-motion';
 
 interface CarCardProps {
   car: Car;
+  index?: number;
 }
 
-const CarCard = ({ car }: CarCardProps) => {
+const CarCard = ({ car, index = 0 }: CarCardProps) => {
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-card">
-      <div className="aspect-video overflow-hidden">
-        <img
-          src={car.image}
-          alt={car.name}
-          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-        />
-      </div>
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-2">
-          <div>
-            <h3 className="font-semibold text-lg">{car.name}</h3>
-            <p className="text-sm text-muted-foreground">{car.type}</p>
+    <motion.div
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+    >
+      <Card className="overflow-hidden group bg-gradient-card border-border/50 hover:border-gold/50 transition-all duration-500 hover:shadow-card">
+        <motion.div
+          className="aspect-video overflow-hidden relative"
+          whileHover={{ scale: 1.05 }}
+          transition={{ duration: 0.3 }}
+        >
+          <img
+            src={car.image}
+            alt={`${car.name} - Luxury car rental`}
+            className="w-full h-full object-cover"
+          />
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          />
+        </motion.div>
+        <CardContent className="p-6">
+          <div className="flex items-start justify-between mb-3">
+            <div>
+              <h3 className="font-semibold text-xl mb-1">{car.name}</h3>
+              <p className="text-sm text-muted-foreground">{car.type}</p>
+            </div>
+            <motion.div
+              whileHover={{ scale: 1.1, rotate: 5 }}
+              className="flex items-center gap-1 bg-gold/10 px-3 py-1.5 rounded-lg border border-gold/20"
+            >
+              <Star className="h-4 w-4 fill-gold text-gold" />
+              <span className="text-sm font-semibold text-gold">{car.rating}</span>
+            </motion.div>
           </div>
-          <div className="flex items-center gap-1 bg-accent/10 px-2 py-1 rounded-lg">
-            <Star className="h-4 w-4 fill-accent text-accent" />
-            <span className="text-sm font-medium">{car.rating}</span>
-          </div>
-        </div>
 
-        <div className="grid grid-cols-3 gap-2 my-4">
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Users className="h-4 w-4 text-primary" />
-            <span>{car.seats}</span>
+          <div className="grid grid-cols-3 gap-3 my-5">
+            <div className="flex items-center gap-2 text-xs">
+              <div className="bg-primary/10 p-2 rounded-lg">
+                <Users className="h-4 w-4 text-primary" />
+              </div>
+              <span className="font-medium">{car.seats}</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              <div className="bg-primary/10 p-2 rounded-lg">
+                <Gauge className="h-4 w-4 text-primary" />
+              </div>
+              <span className="font-medium">{car.transmission}</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              <div className="bg-primary/10 p-2 rounded-lg">
+                <Fuel className="h-4 w-4 text-primary" />
+              </div>
+              <span className="font-medium">{car.fuel}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Gauge className="h-4 w-4 text-primary" />
-            <span>{car.transmission}</span>
-          </div>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Fuel className="h-4 w-4 text-primary" />
-            <span>{car.fuel}</span>
-          </div>
-        </div>
 
-        <div className="flex items-end justify-between">
-          <div>
-            <p className="text-2xl font-bold text-primary">${car.pricePerDay}</p>
-            <p className="text-xs text-muted-foreground">per day</p>
+          <div className="flex items-end justify-between pt-4 border-t border-border">
+            <div>
+              <p className="text-3xl font-bold bg-gradient-premium bg-clip-text text-transparent">
+                ${car.pricePerDay}
+              </p>
+              <p className="text-xs text-muted-foreground">per day</p>
+            </div>
           </div>
-        </div>
-      </CardContent>
-      <CardFooter className="p-4 pt-0">
-        <Button asChild className="w-full">
-          <Link to={`/car/${car.id}`}>View Details</Link>
-        </Button>
-      </CardFooter>
-    </Card>
+        </CardContent>
+        <CardFooter className="p-6 pt-0">
+          <Button asChild className="w-full bg-gradient-gold hover:shadow-glow transition-all duration-300 group">
+            <Link to={`/car/${car.id}`}>
+              View Details
+              <motion.span
+                className="ml-2"
+                animate={{ x: [0, 5, 0] }}
+                transition={{ repeat: Infinity, duration: 1.5 }}
+              >
+                →
+              </motion.span>
+            </Link>
+          </Button>
+        </CardFooter>
+      </Card>
+    </motion.div>
   );
 };
 

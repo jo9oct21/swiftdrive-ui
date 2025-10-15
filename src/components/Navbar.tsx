@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Car, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Navbar = () => {
   const location = useLocation();
@@ -17,14 +18,25 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="bg-background border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-background/95">
+    <motion.nav
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="bg-background/95 backdrop-blur-md border-b border-border sticky top-0 z-50 shadow-md"
+    >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="bg-primary p-2 rounded-lg group-hover:scale-110 transition-transform">
+            <motion.div
+              whileHover={{ rotate: 360 }}
+              transition={{ duration: 0.5 }}
+              className="bg-primary p-2 rounded-lg"
+            >
               <Car className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold text-foreground">DriveNow</span>
+            </motion.div>
+            <span className="text-xl font-bold bg-gradient-premium bg-clip-text text-transparent">
+              DriveNow
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -33,17 +45,18 @@ const Navbar = () => {
               <Link
                 key={link.path}
                 to={link.path}
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  isActive(link.path) ? 'text-primary' : 'text-muted-foreground'
+                className={`text-sm font-medium transition-colors hover:text-primary relative group ${
+                  isActive(link.path) ? 'text-primary' : 'text-foreground'
                 }`}
               >
                 {link.label}
+                <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-gradient-gold transition-all duration-300 group-hover:w-full"></span>
               </Link>
             ))}
           </div>
 
           <div className="hidden md:flex items-center gap-4">
-            <Button variant="outline" asChild>
+            <Button asChild className="bg-gradient-gold hover:shadow-glow transition-all duration-300">
               <Link to="/booking">Book Now</Link>
             </Button>
           </div>
@@ -63,31 +76,38 @@ const Navbar = () => {
         </div>
 
         {/* Mobile Navigation */}
-        {mobileMenuOpen && (
-          <div className="md:hidden py-4 animate-fade-in">
-            <div className="flex flex-col gap-4">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`text-sm font-medium transition-colors hover:text-primary ${
-                    isActive(link.path) ? 'text-primary' : 'text-muted-foreground'
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
-              <Button variant="outline" asChild className="w-full">
-                <Link to="/booking" onClick={() => setMobileMenuOpen(false)}>
-                  Book Now
-                </Link>
-              </Button>
-            </div>
-          </div>
-        )}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="md:hidden overflow-hidden"
+            >
+              <div className="flex flex-col gap-4 py-4">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`text-sm font-medium transition-colors hover:text-primary ${
+                      isActive(link.path) ? 'text-primary' : 'text-foreground'
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+                <Button asChild className="w-full bg-gradient-gold">
+                  <Link to="/booking" onClick={() => setMobileMenuOpen(false)}>
+                    Book Now
+                  </Link>
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-    </nav>
+    </motion.nav>
   );
 };
 
