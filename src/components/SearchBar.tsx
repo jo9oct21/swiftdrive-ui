@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +14,7 @@ interface SearchBarProps {
 }
 
 const SearchBar = ({ onSearch }: SearchBarProps) => {
+  const navigate = useNavigate();
   const [location, setLocation] = useState('');
   const [pickupDate, setPickupDate] = useState('');
   const [returnDate, setReturnDate] = useState('');
@@ -20,6 +22,13 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
   const handleSearch = () => {
     if (onSearch) {
       onSearch({ location, pickupDate, returnDate });
+    } else {
+      // Navigate to cars page with search params
+      const params = new URLSearchParams();
+      if (location) params.set('location', location);
+      if (pickupDate) params.set('pickupDate', pickupDate);
+      if (returnDate) params.set('returnDate', returnDate);
+      navigate(`/cars?${params.toString()}`);
     }
   };
 

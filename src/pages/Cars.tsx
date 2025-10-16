@@ -1,5 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Filter } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
@@ -15,6 +17,7 @@ import { cars } from '@/data/cars';
 import { SearchFilters } from '@/types/Car';
 
 const Cars = () => {
+  const [searchParams] = useSearchParams();
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>({
     carType: 'all',
@@ -23,6 +26,22 @@ const Cars = () => {
     fuel: 'all',
     sortBy: 'popularity',
   });
+
+  // Handle search params from home page
+  useEffect(() => {
+    const location = searchParams.get('location');
+    const pickupDate = searchParams.get('pickupDate');
+    const returnDate = searchParams.get('returnDate');
+
+    if (location || pickupDate || returnDate) {
+      const searchInfo = [];
+      if (location) searchInfo.push(`Location: ${location}`);
+      if (pickupDate) searchInfo.push(`Pickup: ${pickupDate}`);
+      if (returnDate) searchInfo.push(`Return: ${returnDate}`);
+      
+      toast.success(`Search applied: ${searchInfo.join(', ')}`);
+    }
+  }, [searchParams]);
 
   const filteredCars = useMemo(() => {
     let result = [...cars];
