@@ -123,8 +123,8 @@ export default {
       backgroundImage: {
         "gradient-hero": "var(--gradient-hero)",
         "gradient-card": "var(--gradient-card)",
-        "gradient-gold": "var(--gradient-gold)",
-        "gradient-premium": "var(--gradient-premium)",
+        "gradient-primary": "var(--gradient-primary)",
+        "gradient-glass": "var(--gradient-glass)",
       },
       boxShadow: {
         sm: "var(--shadow-sm)",

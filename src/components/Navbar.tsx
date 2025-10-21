@@ -1,16 +1,22 @@
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Car, Menu, X } from 'lucide-react';
+import { Menu, X, Car } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Navbar = () => {
   const location = useLocation();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
-  const isActive = (path: string) => location.pathname === path;
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
-  const navLinks = [
+  const links = [
     { path: '/', label: 'Home' },
     { path: '/cars', label: 'Cars' },
     { path: '/about', label: 'About' },
@@ -18,11 +24,12 @@ const Navbar = () => {
   ];
 
   return (
-    <motion.nav
+    <motion.nav 
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="bg-background/95 backdrop-blur-md border-b border-border sticky top-0 z-50 shadow-md"
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled ? 'glass-card' : 'bg-transparent'
+      }`}
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
@@ -30,78 +37,77 @@ const Navbar = () => {
             <motion.div
               whileHover={{ rotate: 360 }}
               transition={{ duration: 0.5 }}
-              className="bg-primary p-2 rounded-lg"
             >
-              <Car className="h-6 w-6 text-primary-foreground" />
+              <Car className="h-6 w-6 text-primary" />
             </motion.div>
-            <span className="text-xl font-bold bg-gradient-premium bg-clip-text text-transparent">
-              DriveNow
+            <span className="text-xl font-bold text-gradient">
+              LuxeDrive
             </span>
           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
+            {links.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
-                className={`text-sm font-medium transition-colors hover:text-primary relative group ${
-                  isActive(link.path) ? 'text-primary' : 'text-foreground'
+                className={`text-sm font-medium transition-all duration-300 hover:text-primary relative group ${
+                  location.pathname === link.path
+                    ? 'text-primary'
+                    : 'text-foreground/80'
                 }`}
               >
                 {link.label}
-                <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-gradient-gold transition-all duration-300 group-hover:w-full"></span>
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-primary to-accent transition-all duration-300 group-hover:w-full" />
               </Link>
             ))}
-          </div>
-
-          <div className="hidden md:flex items-center gap-4">
-            <Button asChild className="bg-gradient-gold hover:shadow-glow transition-all duration-300">
-              <Link to="/booking">Book Now</Link>
+            <ThemeToggle />
+            <Button variant="gradient" size="sm" className="shadow-lg">
+              Sign In
             </Button>
           </div>
 
           {/* Mobile Menu Button */}
-          <button
-            className="md:hidden p-2"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
-          </button>
+          <div className="md:hidden flex items-center gap-2">
+            <ThemeToggle />
+            <button
+              className="p-2"
+              onClick={() => setIsOpen(!isOpen)}
+            >
+              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Navigation */}
         <AnimatePresence>
-          {mobileMenuOpen && (
+          {isOpen && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="md:hidden overflow-hidden"
+              className="md:hidden border-t border-border overflow-hidden"
             >
-              <div className="flex flex-col gap-4 py-4">
-                {navLinks.map((link) => (
+              <div className="py-4 space-y-4">
+                {links.map((link) => (
                   <Link
                     key={link.path}
                     to={link.path}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`text-sm font-medium transition-colors hover:text-primary ${
-                      isActive(link.path) ? 'text-primary' : 'text-foreground'
+                    className={`block py-2 px-4 rounded-lg transition-all duration-300 ${
+                      location.pathname === link.path
+                        ? 'glass-card text-primary'
+                        : 'text-foreground/80 hover:bg-accent/10'
                     }`}
+                    onClick={() => setIsOpen(false)}
                   >
                     {link.label}
                   </Link>
                 ))}
-                <Button asChild className="w-full bg-gradient-gold">
-                  <Link to="/booking" onClick={() => setMobileMenuOpen(false)}>
-                    Book Now
-                  </Link>
-                </Button>
+                <div className="px-4">
+                  <Button variant="gradient" className="w-full" size="sm">
+                    Sign In
+                  </Button>
+                </div>
               </div>
             </motion.div>
           )}
