@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
-import { Star, Users, Gauge, Fuel } from 'lucide-react';
+import { Star, Users, Gauge, Fuel, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Car } from '@/types/Car';
 import { motion } from 'framer-motion';
+import { useFavorites } from '@/hooks/useFavorites';
 
 interface CarCardProps {
   car: Car;
@@ -11,6 +12,7 @@ interface CarCardProps {
 }
 
 const CarCard = ({ car, index = 0 }: CarCardProps) => {
+  const { isFavorite, toggleFavorite } = useFavorites();
   return (
     <motion.div
       initial={{ opacity: 0, y: 50 }}
@@ -29,6 +31,19 @@ const CarCard = ({ car, index = 0 }: CarCardProps) => {
             alt={`${car.name} - Luxury car rental`}
             className="w-full h-full object-cover"
           />
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              toggleFavorite(car.id);
+            }}
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:scale-110 transition-transform z-10"
+          >
+            <Heart
+              className={`w-5 h-5 ${
+                isFavorite(car.id) ? 'fill-red-500 text-red-500' : 'text-muted-foreground'
+              }`}
+            />
+          </button>
           <motion.div
             className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
           />

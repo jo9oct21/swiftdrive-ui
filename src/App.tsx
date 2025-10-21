@@ -12,6 +12,14 @@ import Booking from "./pages/Booking";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Favorites from "./pages/Favorites";
+import AdminLayout from "./components/admin/AdminLayout";
+import Dashboard from "./pages/admin/Dashboard";
+import ManageCars from "./pages/admin/ManageCars";
+import ManageUsers from "./pages/admin/ManageUsers";
+import ManageBookings from "./pages/admin/ManageBookings";
 
 const queryClient = new QueryClient();
 
@@ -21,17 +29,34 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Navbar />
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/cars" element={<Cars />} />
-          <Route path="/car/:id" element={<CarDetails />} />
-          <Route path="/booking" element={<Booking />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="*" element={<NotFound />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="cars" element={<ManageCars />} />
+            <Route path="users" element={<ManageUsers />} />
+            <Route path="bookings" element={<ManageBookings />} />
+          </Route>
+
+          <Route path="/*" element={
+            <>
+              <Navbar />
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/cars" element={<Cars />} />
+                <Route path="/car/:id" element={<CarDetails />} />
+                <Route path="/booking" element={<Booking />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/favorites" element={<Favorites />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <Footer />
+            </>
+          } />
         </Routes>
-        <Footer />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

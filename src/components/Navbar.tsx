@@ -1,20 +1,38 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Car } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, Car, Heart, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '@/hooks/use-toast';
 
 const Navbar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    setUser(null);
+    toast({ title: 'Logged out', description: 'See you soon!' });
+    navigate('/');
+  };
 
   const links = [
     { path: '/', label: 'Home' },
@@ -61,10 +79,34 @@ const Navbar = () => {
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-primary to-accent transition-all duration-300 group-hover:w-full" />
               </Link>
             ))}
+            
+            <Link to="/favorites">
+              <Button variant="ghost" size="icon" className="hover-glow">
+                <Heart className="h-5 w-5" />
+              </Button>
+            </Link>
+            
             <ThemeToggle />
-            <Button variant="gradient" size="sm" className="shadow-lg">
-              Sign In
-            </Button>
+            
+            {user ? (
+              <div className="flex items-center gap-2">
+                {user.role === 'admin' && (
+                  <Link to="/admin">
+                    <Button variant="outline" size="sm">Admin</Button>
+                  </Link>
+                )}
+                <Button variant="ghost" size="icon" onClick={handleLogout} className="hover-glow">
+                  <LogOut className="w-5 h-5" />
+                </Button>
+              </div>
+            ) : (
+              <Link to="/login">
+                <Button variant="gradient" size="sm" className="shadow-lg">
+                  <User className="w-4 h-4 mr-2" />
+                  Sign In
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -103,10 +145,36 @@ const Navbar = () => {
                     {link.label}
                   </Link>
                 ))}
-                <div className="px-4">
-                  <Button variant="gradient" className="w-full" size="sm">
-                    Sign In
-                  </Button>
+                <Link
+                  to="/favorites"
+                  className="block py-2 px-4 rounded-lg transition-all duration-300 text-foreground/80 hover:bg-accent/10"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Favorites
+                </Link>
+                <div className="px-4 space-y-2">
+                  {user ? (
+                    <>
+                      {user.role === 'admin' && (
+                        <Link to="/admin">
+                          <Button variant="outline" className="w-full" size="sm">
+                            Admin
+                          </Button>
+                        </Link>
+                      )}
+                      <Button variant="ghost" className="w-full" size="sm" onClick={handleLogout}>
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Logout
+                      </Button>
+                    </>
+                  ) : (
+                    <Link to="/login">
+                      <Button variant="gradient" className="w-full" size="sm">
+                        <User className="w-4 h-4 mr-2" />
+                        Sign In
+                      </Button>
+                    </Link>
+                  )}
                 </div>
               </div>
             </motion.div>
