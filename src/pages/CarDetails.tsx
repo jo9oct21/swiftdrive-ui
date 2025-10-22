@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cars } from '@/data/cars';
 import CarCard from '@/components/CarCard';
+import { motion } from 'framer-motion';
 
 const CarDetails = () => {
   const { id } = useParams();
@@ -24,7 +25,7 @@ const CarDetails = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-background via-primary/5 to-background">
       <div className="container mx-auto px-4 py-8">
         <Button variant="ghost" asChild className="mb-6">
           <Link to="/cars">
@@ -35,32 +36,67 @@ const CarDetails = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* Image Gallery */}
-          <div className="space-y-4">
-            <div className="aspect-video rounded-xl overflow-hidden bg-secondary">
+          <motion.div 
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-4"
+          >
+            <motion.div 
+              whileHover={{ scale: 1.02 }}
+              className="aspect-video rounded-2xl overflow-hidden bg-gradient-card shadow-card border border-border/50"
+            >
               <img
                 src={car.image}
                 alt={car.name}
                 className="w-full h-full object-cover"
               />
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* Car Info */}
-          <div>
-            <div className="flex items-start justify-between mb-4">
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            <div className="flex items-start justify-between mb-6">
               <div>
-                <h1 className="text-3xl md:text-4xl font-bold mb-2">{car.name}</h1>
-                <p className="text-lg text-muted-foreground">{car.type} • {car.year}</p>
+                <motion.h1 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-4xl md:text-5xl font-bold mb-3 bg-gradient-premium bg-clip-text text-transparent"
+                >
+                  {car.name}
+                </motion.h1>
+                <p className="text-xl text-muted-foreground">{car.type} • {car.year}</p>
+                <div className="mt-3">
+                  {car.available ? (
+                    <span className="px-3 py-1.5 rounded-full bg-green-500/20 text-green-600 dark:text-green-400 font-medium text-sm">
+                      ✓ Available Now
+                    </span>
+                  ) : (
+                    <span className="px-3 py-1.5 rounded-full bg-red-500/20 text-red-600 dark:text-red-400 font-medium text-sm">
+                      ✗ Not Available
+                    </span>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-2 bg-accent/10 px-3 py-2 rounded-lg">
-                <Star className="h-5 w-5 fill-accent text-accent" />
-                <span className="text-lg font-semibold">{car.rating}</span>
-                <span className="text-sm text-muted-foreground">({car.reviews})</span>
-              </div>
+              <motion.div 
+                whileHover={{ scale: 1.1, rotate: 5 }}
+                className="flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-600 px-4 py-2 rounded-xl shadow-glow"
+              >
+                <Star className="h-5 w-5 fill-white text-white" />
+                <span className="text-lg font-bold text-white">{car.rating}</span>
+                <span className="text-sm text-white/80">({car.reviews})</span>
+              </motion.div>
             </div>
 
-            <Card className="mb-6 bg-gradient-card">
-              <CardContent className="p-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Card className="mb-6 glass-card border-border/50 shadow-card">
+                <CardContent className="p-8">
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <div className="flex items-center gap-3">
                     <div className="bg-primary/10 p-3 rounded-lg">
@@ -100,56 +136,84 @@ const CarDetails = () => {
                   </div>
                 </div>
 
-                <div className="border-t border-border pt-6">
-                  <div className="flex items-end justify-between mb-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Price per day</p>
-                      <p className="text-4xl font-bold text-primary">${car.pricePerDay}</p>
+                  <div className="border-t border-border pt-6">
+                    <div className="mb-6">
+                      <p className="text-sm text-muted-foreground mb-2">Price per day</p>
+                      <div className="flex items-baseline gap-3">
+                        <motion.p 
+                          initial={{ scale: 0.8 }}
+                          animate={{ scale: 1 }}
+                          className="text-5xl font-bold text-gold"
+                        >
+                          ${car.pricePerDay}
+                        </motion.p>
+                        <span className="text-lg text-muted-foreground">/ day</span>
+                      </div>
                     </div>
+                    <Button asChild className="w-full bg-gradient-gold hover:shadow-glow" size="lg">
+                      <Link to="/booking" state={{ car }}>
+                        <motion.span
+                          animate={{ x: [0, 5, 0] }}
+                          transition={{ repeat: Infinity, duration: 1.5 }}
+                        >
+                          Book Now →
+                        </motion.span>
+                      </Link>
+                    </Button>
                   </div>
-                  <Button asChild className="w-full" size="lg">
-                    <Link to="/booking" state={{ car }}>
-                      Book Now
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </motion.div>
         </div>
 
         {/* Description & Features */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Description</h2>
-            <p className="text-muted-foreground leading-relaxed">{car.description}</p>
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12"
+        >
+          <div className="glass-card p-8 rounded-2xl">
+            <h2 className="text-3xl font-bold mb-6 text-gradient">Description</h2>
+            <p className="text-muted-foreground leading-relaxed text-lg">{car.description}</p>
           </div>
 
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Features</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="glass-card p-8 rounded-2xl">
+            <h2 className="text-3xl font-bold mb-6 text-gradient">Features</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {car.features.map((feature, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <div className="bg-primary/10 p-1 rounded-full">
-                    <Check className="h-4 w-4 text-primary" />
+                <motion.div 
+                  key={index}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 + index * 0.05 }}
+                  className="flex items-center gap-3 group"
+                >
+                  <div className="bg-gold/10 p-2 rounded-full group-hover:bg-gold/20 transition-colors">
+                    <Check className="h-4 w-4 text-gold" />
                   </div>
-                  <span className="text-sm">{feature}</span>
-                </div>
+                  <span className="text-sm font-medium">{feature}</span>
+                </motion.div>
               ))}
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Related Cars */}
         {relatedCars.length > 0 && (
-          <div>
-            <h2 className="text-2xl font-bold mb-6">Similar Cars</h2>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <h2 className="text-3xl font-bold mb-8 text-gradient">Similar Cars</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {relatedCars.map((relatedCar) => (
-                <CarCard key={relatedCar.id} car={relatedCar} />
+              {relatedCars.map((relatedCar, index) => (
+                <CarCard key={relatedCar.id} car={relatedCar} index={index} />
               ))}
             </div>
-          </div>
+          </motion.div>
         )}
       </div>
     </div>

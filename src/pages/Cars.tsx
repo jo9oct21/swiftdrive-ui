@@ -4,6 +4,7 @@ import { Filter } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { motion } from 'framer-motion';
 import {
   Select,
   SelectContent,
@@ -84,12 +85,34 @@ const Cars = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="bg-gradient-hero text-white py-16">
-        <div className="container mx-auto px-4">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Our Fleet</h1>
-          <p className="text-lg text-white/90 max-w-2xl">
+      <div className="bg-gradient-to-br from-primary via-primary/80 to-gold text-white py-20 relative overflow-hidden">
+        <motion.div
+          className="absolute inset-0 opacity-10"
+          animate={{ 
+            backgroundPosition: ['0% 0%', '100% 100%'],
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+          style={{
+            backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
+            backgroundSize: '50px 50px',
+          }}
+        />
+        <div className="container mx-auto px-4 relative z-10">
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-5xl md:text-6xl font-bold mb-4"
+          >
+            Our Fleet
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-xl text-white/90 max-w-2xl"
+          >
             Explore our diverse collection of premium vehicles
-          </p>
+          </motion.p>
         </div>
       </div>
 
@@ -116,60 +139,61 @@ const Cars = () => {
                   <h3 className="font-semibold mb-4">Filters</h3>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Car Type</Label>
-                  <Select
-                    value={filters.carType}
-                    onValueChange={(value) => setFilters({ ...filters, carType: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="SUV">SUV</SelectItem>
-                      <SelectItem value="Sedan">Sedan</SelectItem>
-                      <SelectItem value="Sports">Sports</SelectItem>
-                      <SelectItem value="Electric">Electric</SelectItem>
-                      <SelectItem value="Luxury">Luxury</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold">Car Type</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {['all', 'SUV', 'Sedan', 'Sports', 'Electric', 'Luxury'].map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => setFilters({ ...filters, carType: type })}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                          filters.carType === type
+                            ? 'bg-gradient-gold text-white shadow-glow'
+                            : 'bg-secondary hover:bg-secondary/80 text-foreground'
+                        }`}
+                      >
+                        {type === 'all' ? 'All Types' : type}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Transmission</Label>
-                  <Select
-                    value={filters.transmission}
-                    onValueChange={(value) => setFilters({ ...filters, transmission: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
-                      <SelectItem value="Automatic">Automatic</SelectItem>
-                      <SelectItem value="Manual">Manual</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold">Transmission</Label>
+                  <div className="flex gap-2">
+                    {['all', 'Automatic', 'Manual'].map((trans) => (
+                      <button
+                        key={trans}
+                        onClick={() => setFilters({ ...filters, transmission: trans })}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                          filters.transmission === trans
+                            ? 'bg-gradient-gold text-white shadow-glow'
+                            : 'bg-secondary hover:bg-secondary/80 text-foreground'
+                        }`}
+                      >
+                        {trans === 'all' ? 'All' : trans}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Fuel Type</Label>
-                  <Select
-                    value={filters.fuel}
-                    onValueChange={(value) => setFilters({ ...filters, fuel: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
-                      <SelectItem value="Petrol">Petrol</SelectItem>
-                      <SelectItem value="Diesel">Diesel</SelectItem>
-                      <SelectItem value="Electric">Electric</SelectItem>
-                      <SelectItem value="Hybrid">Hybrid</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold">Fuel Type</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {['all', 'Petrol', 'Diesel', 'Electric', 'Hybrid'].map((fuel) => (
+                      <button
+                        key={fuel}
+                        onClick={() => setFilters({ ...filters, fuel: fuel })}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                          filters.fuel === fuel
+                            ? 'bg-gradient-gold text-white shadow-glow'
+                            : 'bg-secondary hover:bg-secondary/80 text-foreground'
+                        }`}
+                      >
+                        {fuel === 'all' ? 'All' : fuel}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="space-y-4">

@@ -3,6 +3,18 @@ import { motion } from 'framer-motion';
 import { Search, UserPlus, Edit, Trash2, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { UserDialog } from '@/components/admin/UserDialog';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   Table,
   TableBody,
@@ -20,13 +32,51 @@ const demoUsers = [
 ];
 
 const ManageUsers = () => {
+  const { toast } = useToast();
   const [search, setSearch] = useState('');
+  const [userList, setUserList] = useState(demoUsers);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<typeof demoUsers[0] | undefined>();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<number | null>(null);
 
-  const filteredUsers = demoUsers.filter(
+  const filteredUsers = userList.filter(
     (user) =>
       user.name.toLowerCase().includes(search.toLowerCase()) ||
       user.email.toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleAddUser = () => {
+    setSelectedUser(undefined);
+    setDialogOpen(true);
+  };
+
+  const handleEditUser = (user: typeof demoUsers[0]) => {
+    setSelectedUser(user);
+    setDialogOpen(true);
+  };
+
+  const handleSaveUser = (user: typeof demoUsers[0]) => {
+    if (selectedUser) {
+      setUserList(userList.map((u) => (u.id === user.id ? user : u)));
+    } else {
+      setUserList([...userList, user]);
+    }
+  };
+
+  const handleDeleteClick = (userId: number) => {
+    setUserToDelete(userId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (userToDelete) {
+      setUserList(userList.filter((u) => u.id !== userToDelete));
+      toast({ title: 'Success', description: 'User deleted successfully' });
+    }
+    setDeleteDialogOpen(false);
+    setUserToDelete(null);
+  };
 
   return (
     <div className="space-y-8">
@@ -35,7 +85,7 @@ const ManageUsers = () => {
           <h1 className="text-4xl font-bold text-gradient mb-2">Manage Users</h1>
           <p className="text-muted-foreground">View and manage user accounts</p>
         </div>
-        <Button variant="gradient" size="lg">
+        <Button variant="gradient" size="lg" onClick={handleAddUser}>
           <UserPlus className="w-5 h-5 mr-2" />
           Add User
         </Button>
@@ -92,10 +142,10 @@ const ManageUsers = () => {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" onClick={() => handleEditUser(user)}>
                       <Edit className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(user.id)}>
                       <Trash2 className="w-4 h-4 text-destructive" />
                     </Button>
                   </div>
@@ -105,6 +155,30 @@ const ManageUsers = () => {
           </TableBody>
         </Table>
       </motion.div>
+
+      <UserDialog
+        user={selectedUser}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSave={handleSaveUser}
+      />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the user account.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

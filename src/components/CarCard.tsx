@@ -50,16 +50,27 @@ const CarCard = ({ car, index = 0 }: CarCardProps) => {
         </motion.div>
         <CardContent className="p-6">
           <div className="flex items-start justify-between mb-3">
-            <div>
+            <div className="flex-1">
               <h3 className="font-semibold text-xl mb-1">{car.name}</h3>
               <p className="text-sm text-muted-foreground">{car.type}</p>
+              <div className="mt-2">
+                {car.available ? (
+                  <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-600 dark:text-green-400 font-medium">
+                    Available
+                  </span>
+                ) : (
+                  <span className="text-xs px-2 py-1 rounded-full bg-red-500/20 text-red-600 dark:text-red-400 font-medium">
+                    Not Available
+                  </span>
+                )}
+              </div>
             </div>
             <motion.div
               whileHover={{ scale: 1.1, rotate: 5 }}
-              className="flex items-center gap-1 bg-gold/10 px-3 py-1.5 rounded-lg border border-gold/20"
+              className="flex items-center gap-1 bg-gradient-to-r from-yellow-400 to-yellow-600 px-3 py-1.5 rounded-lg shadow-lg"
             >
-              <Star className="h-4 w-4 fill-gold text-gold" />
-              <span className="text-sm font-semibold text-gold">{car.rating}</span>
+              <Star className="h-4 w-4 fill-white text-white" />
+              <span className="text-sm font-bold text-white">{car.rating}</span>
             </motion.div>
           </div>
 
@@ -84,12 +95,10 @@ const CarCard = ({ car, index = 0 }: CarCardProps) => {
             </div>
           </div>
 
-          <div className="flex items-end justify-between pt-4 border-t border-border">
-            <div>
-              <p className="text-3xl font-bold bg-gradient-premium bg-clip-text text-transparent">
-                ${car.pricePerDay}
-              </p>
-              <p className="text-xs text-muted-foreground">per day</p>
+          <div className="pt-4 border-t border-border">
+            <div className="flex items-baseline gap-2 mb-1">
+              <span className="text-3xl font-bold text-gold">${car.pricePerDay}</span>
+              <span className="text-sm text-muted-foreground">per day</span>
             </div>
           </div>
         </CardContent>

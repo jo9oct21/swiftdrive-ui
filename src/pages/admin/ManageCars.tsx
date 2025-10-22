@@ -4,6 +4,19 @@ import { Plus, Search, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cars } from '@/data/cars';
+import { Car } from '@/types/Car';
+import { CarDialog } from '@/components/admin/CarDialog';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   Table,
   TableBody,
@@ -14,13 +27,51 @@ import {
 } from '@/components/ui/table';
 
 const ManageCars = () => {
+  const { toast } = useToast();
   const [search, setSearch] = useState('');
+  const [carList, setCarList] = useState<Car[]>(cars);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedCar, setSelectedCar] = useState<Car | undefined>();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [carToDelete, setCarToDelete] = useState<string | null>(null);
 
-  const filteredCars = cars.filter(
+  const filteredCars = carList.filter(
     (car) =>
       car.name.toLowerCase().includes(search.toLowerCase()) ||
       car.brand.toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleAddCar = () => {
+    setSelectedCar(undefined);
+    setDialogOpen(true);
+  };
+
+  const handleEditCar = (car: Car) => {
+    setSelectedCar(car);
+    setDialogOpen(true);
+  };
+
+  const handleSaveCar = (car: Car) => {
+    if (selectedCar) {
+      setCarList(carList.map((c) => (c.id === car.id ? car : c)));
+    } else {
+      setCarList([...carList, car]);
+    }
+  };
+
+  const handleDeleteClick = (carId: string) => {
+    setCarToDelete(carId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (carToDelete) {
+      setCarList(carList.filter((c) => c.id !== carToDelete));
+      toast({ title: 'Success', description: 'Car deleted successfully' });
+    }
+    setDeleteDialogOpen(false);
+    setCarToDelete(null);
+  };
 
   return (
     <div className="space-y-8">
@@ -29,7 +80,7 @@ const ManageCars = () => {
           <h1 className="text-4xl font-bold text-gradient mb-2">Manage Cars</h1>
           <p className="text-muted-foreground">Add, edit, or remove cars from your fleet</p>
         </div>
-        <Button variant="gradient" size="lg">
+        <Button variant="gradient" size="lg" onClick={handleAddCar}>
           <Plus className="w-5 h-5 mr-2" />
           Add New Car
         </Button>
@@ -83,10 +134,10 @@ const ManageCars = () => {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" onClick={() => handleEditCar(car)}>
                       <Edit className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(car.id)}>
                       <Trash2 className="w-4 h-4 text-destructive" />
                     </Button>
                   </div>
@@ -96,6 +147,30 @@ const ManageCars = () => {
           </TableBody>
         </Table>
       </motion.div>
+
+      <CarDialog
+        car={selectedCar}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSave={handleSaveCar}
+      />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the car from the system.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
