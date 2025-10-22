@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Car, Heart, User, LogOut } from 'lucide-react';
+import { Menu, X, Car, Heart, User, LogOut, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
+import { useFavorites } from '@/hooks/useFavorites';
 
 const Navbar = () => {
   const location = useLocation();
@@ -13,6 +14,7 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [user, setUser] = useState<any>(null);
   const { toast } = useToast();
+  const { favorites } = useFavorites();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -34,12 +36,19 @@ const Navbar = () => {
     navigate('/');
   };
 
-  const links = [
+  const publicLinks = [
     { path: '/', label: 'Home' },
     { path: '/cars', label: 'Cars' },
     { path: '/about', label: 'About' },
     { path: '/contact', label: 'Contact' },
   ];
+
+  const userLinks = [
+    ...publicLinks,
+    { path: '/my-bookings', label: 'My Bookings' },
+  ];
+
+  const links = user ? userLinks : publicLinks;
 
   return (
     <motion.nav 
@@ -69,22 +78,29 @@ const Navbar = () => {
               <Link
                 key={link.path}
                 to={link.path}
-                className={`text-sm font-medium transition-all duration-300 hover:text-primary relative group ${
+                className={`text-sm font-medium transition-all duration-300 hover:text-gold relative group ${
                   location.pathname === link.path
-                    ? 'text-primary'
-                    : 'text-foreground/80'
+                    ? 'text-gold'
+                    : 'text-white'
                 }`}
               >
                 {link.label}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-primary to-accent transition-all duration-300 group-hover:w-full" />
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-gold transition-all duration-300 group-hover:w-full" />
               </Link>
             ))}
             
-            <Link to="/favorites">
-              <Button variant="ghost" size="icon" className="hover-glow">
-                <Heart className="h-5 w-5" />
-              </Button>
-            </Link>
+            {user && (
+              <Link to="/favorites" className="relative">
+                <Button variant="ghost" size="icon" className="hover-glow text-white hover:text-gold">
+                  <Heart className="h-5 w-5" />
+                  {favorites.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-gold text-foreground text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                      {favorites.length}
+                    </span>
+                  )}
+                </Button>
+              </Link>
+            )}
             
             <ThemeToggle />
             
@@ -137,21 +153,29 @@ const Navbar = () => {
                     to={link.path}
                     className={`block py-2 px-4 rounded-lg transition-all duration-300 ${
                       location.pathname === link.path
-                        ? 'glass-card text-primary'
-                        : 'text-foreground/80 hover:bg-accent/10'
+                        ? 'glass-card text-gold'
+                        : 'text-foreground hover:bg-accent/10'
                     }`}
                     onClick={() => setIsOpen(false)}
                   >
                     {link.label}
                   </Link>
                 ))}
-                <Link
-                  to="/favorites"
-                  className="block py-2 px-4 rounded-lg transition-all duration-300 text-foreground/80 hover:bg-accent/10"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Favorites
-                </Link>
+                {user && (
+                  <Link
+                    to="/favorites"
+                    className="flex items-center gap-2 py-2 px-4 rounded-lg transition-all duration-300 text-foreground hover:bg-accent/10"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <Heart className="w-4 h-4" />
+                    Favorites
+                    {favorites.length > 0 && (
+                      <span className="ml-auto bg-gold text-foreground text-xs px-2 py-0.5 rounded-full font-bold">
+                        {favorites.length}
+                      </span>
+                    )}
+                  </Link>
+                )}
                 <div className="px-4 space-y-2">
                   {user ? (
                     <>

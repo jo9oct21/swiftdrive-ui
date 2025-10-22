@@ -1,4 +1,5 @@
 import { Shield, Users, Award, Heart } from 'lucide-react';
+import aboutBg from '@/assets/about-bg.jpg';
 
 const About = () => {
   const values = [
@@ -34,9 +35,17 @@ const About = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <div className="bg-gradient-hero text-white py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 animate-fade-in">About DriveNow</h1>
+      <div
+        className="relative py-32 text-white overflow-hidden"
+        style={{
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.5)), url(${aboutBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+        }}
+      >
+        <div className="container mx-auto px-4 text-center relative z-10">
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 animate-fade-in">About LuxeDrive</h1>
           <p className="text-xl text-white/90 max-w-3xl mx-auto animate-fade-in-up">
             Your trusted partner in premium car rentals since 2010. We make car rental simple, affordable, and enjoyable.
           </p>

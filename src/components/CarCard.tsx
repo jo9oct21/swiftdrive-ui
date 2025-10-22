@@ -15,10 +15,10 @@ const CarCard = ({ car, index = 0 }: CarCardProps) => {
   const { isFavorite, toggleFavorite } = useFavorites();
   return (
     <motion.div
-      initial={{ opacity: 0, y: 50 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ scale: 1.03, y: -8, rotateY: 2 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
     >
       <Card className="overflow-hidden group bg-gradient-card border-border/50 hover:border-gold/50 transition-all duration-500 hover:shadow-card">
         <motion.div

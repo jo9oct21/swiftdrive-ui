@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Car } from '@/types/Car';
 import { useToast } from '@/hooks/use-toast';
+import { ImageUpload } from './ImageUpload';
+import { useEffect } from 'react';
 
 interface CarDialogProps {
   car?: Car;
@@ -17,26 +19,49 @@ interface CarDialogProps {
 
 export const CarDialog = ({ car, open, onOpenChange, onSave }: CarDialogProps) => {
   const { toast } = useToast();
-  const [formData, setFormData] = useState<Partial<Car>>(
-    car || {
-      name: '',
-      brand: '',
-      model: '',
-      year: new Date().getFullYear(),
-      type: 'Sedan',
-      transmission: 'Automatic',
-      fuel: 'Petrol',
-      seats: 5,
-      pricePerDay: 0,
-      rating: 5,
-      reviews: 0,
-      image: '',
-      features: [],
-      description: '',
-      mileage: '',
-      available: true,
+  const [formData, setFormData] = useState<Partial<Car>>({
+    name: '',
+    brand: '',
+    model: '',
+    year: new Date().getFullYear(),
+    type: 'Sedan',
+    transmission: 'Automatic',
+    fuel: 'Petrol',
+    seats: 5,
+    pricePerDay: 0,
+    rating: 5,
+    reviews: 0,
+    image: '',
+    features: [],
+    description: '',
+    mileage: '',
+    available: true,
+  });
+
+  useEffect(() => {
+    if (car) {
+      setFormData(car);
+    } else {
+      setFormData({
+        name: '',
+        brand: '',
+        model: '',
+        year: new Date().getFullYear(),
+        type: 'Sedan',
+        transmission: 'Automatic',
+        fuel: 'Petrol',
+        seats: 5,
+        pricePerDay: 0,
+        rating: 5,
+        reviews: 0,
+        image: '',
+        features: [],
+        description: '',
+        mileage: '',
+        available: true,
+      });
     }
-  );
+  }, [car, open]);
 
   const handleSubmit = () => {
     if (!formData.name || !formData.brand || !formData.pricePerDay) {
@@ -176,11 +201,9 @@ export const CarDialog = ({ car, open, onOpenChange, onSave }: CarDialogProps) =
           </div>
 
           <div className="col-span-2 space-y-2">
-            <Label>Image URL</Label>
-            <Input
+            <ImageUpload
               value={formData.image}
-              onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-              placeholder="https://..."
+              onChange={(base64) => setFormData({ ...formData, image: base64 })}
             />
           </div>
 

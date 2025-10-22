@@ -15,6 +15,7 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Favorites from "./pages/Favorites";
+import MyBookings from "./pages/MyBookings";
 import AdminLayout from "./components/admin/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import ManageCars from "./pages/admin/ManageCars";
@@ -51,6 +52,7 @@ const App = () => (
                 <Route path="/about" element={<About />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/favorites" element={<Favorites />} />
+                <Route path="/my-bookings" element={<MyBookings />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <Footer />

@@ -221,8 +221,8 @@ const Home = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.2 }}
-                whileHover={{ scale: 1.05, y: -10 }}
-                className="text-center p-8 bg-card rounded-2xl shadow-card border border-border/50 hover:border-gold/50 transition-all duration-300"
+                whileHover={{ scale: 1.05, y: -10, rotateX: 5 }}
+                className="text-center p-8 bg-card rounded-2xl shadow-elegant border border-border/50 hover:border-gold/50 hover:shadow-glow transition-all duration-300"
               >
                 <motion.div
                   className="inline-flex items-center justify-center w-20 h-20 bg-gradient-gold rounded-full mb-6"
@@ -263,8 +263,8 @@ const Home = () => {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.15 }}
-              whileHover={{ y: -10 }}
-              className="bg-card p-8 rounded-2xl shadow-card border border-border/50 hover:border-gold/30 transition-all duration-300"
+              whileHover={{ y: -10, scale: 1.02 }}
+              className="bg-card p-8 rounded-2xl shadow-elegant border border-border/50 hover:border-gold/30 hover:shadow-glow transition-all duration-300"
             >
               <div className="flex gap-1 mb-6">
                 {[...Array(testimonial.rating)].map((_, i) => (

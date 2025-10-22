@@ -5,6 +5,7 @@ import { Filter } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -28,6 +29,10 @@ const Cars = () => {
     sortBy: 'popularity',
   });
 
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [selectedTransmissions, setSelectedTransmissions] = useState<string[]>([]);
+  const [selectedFuels, setSelectedFuels] = useState<string[]>([]);
+
   // Handle search params from home page
   useEffect(() => {
     const location = searchParams.get('location');
@@ -48,18 +53,18 @@ const Cars = () => {
     let result = [...cars];
 
     // Filter by car type
-    if (filters.carType && filters.carType !== 'all') {
-      result = result.filter((car) => car.type === filters.carType);
+    if (selectedTypes.length > 0) {
+      result = result.filter((car) => selectedTypes.includes(car.type));
     }
 
     // Filter by transmission
-    if (filters.transmission && filters.transmission !== 'all') {
-      result = result.filter((car) => car.transmission === filters.transmission);
+    if (selectedTransmissions.length > 0) {
+      result = result.filter((car) => selectedTransmissions.includes(car.transmission));
     }
 
     // Filter by fuel
-    if (filters.fuel && filters.fuel !== 'all') {
-      result = result.filter((car) => car.fuel === filters.fuel);
+    if (selectedFuels.length > 0) {
+      result = result.filter((car) => selectedFuels.includes(car.fuel));
     }
 
     // Filter by price range
@@ -81,7 +86,7 @@ const Cars = () => {
     }
 
     return result;
-  }, [filters]);
+  }, [filters, selectedTypes, selectedTransmissions, selectedFuels]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -141,57 +146,81 @@ const Cars = () => {
 
                 <div className="space-y-3">
                   <Label className="text-sm font-semibold">Car Type</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {['all', 'SUV', 'Sedan', 'Sports', 'Electric', 'Luxury'].map((type) => (
-                      <button
-                        key={type}
-                        onClick={() => setFilters({ ...filters, carType: type })}
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                          filters.carType === type
-                            ? 'bg-gradient-gold text-white shadow-glow'
-                            : 'bg-secondary hover:bg-secondary/80 text-foreground'
-                        }`}
-                      >
-                        {type === 'all' ? 'All Types' : type}
-                      </button>
+                  <div className="space-y-2">
+                    {['SUV', 'Sedan', 'Sports', 'Electric', 'Luxury'].map((type) => (
+                      <div key={type} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`type-${type}`}
+                          checked={selectedTypes.includes(type)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedTypes([...selectedTypes, type]);
+                            } else {
+                              setSelectedTypes(selectedTypes.filter((t) => t !== type));
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor={`type-${type}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        >
+                          {type}
+                        </label>
+                      </div>
                     ))}
                   </div>
                 </div>
 
                 <div className="space-y-3">
                   <Label className="text-sm font-semibold">Transmission</Label>
-                  <div className="flex gap-2">
-                    {['all', 'Automatic', 'Manual'].map((trans) => (
-                      <button
-                        key={trans}
-                        onClick={() => setFilters({ ...filters, transmission: trans })}
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                          filters.transmission === trans
-                            ? 'bg-gradient-gold text-white shadow-glow'
-                            : 'bg-secondary hover:bg-secondary/80 text-foreground'
-                        }`}
-                      >
-                        {trans === 'all' ? 'All' : trans}
-                      </button>
+                  <div className="space-y-2">
+                    {['Automatic', 'Manual'].map((trans) => (
+                      <div key={trans} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`trans-${trans}`}
+                          checked={selectedTransmissions.includes(trans)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedTransmissions([...selectedTransmissions, trans]);
+                            } else {
+                              setSelectedTransmissions(selectedTransmissions.filter((t) => t !== trans));
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor={`trans-${trans}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        >
+                          {trans}
+                        </label>
+                      </div>
                     ))}
                   </div>
                 </div>
 
                 <div className="space-y-3">
                   <Label className="text-sm font-semibold">Fuel Type</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {['all', 'Petrol', 'Diesel', 'Electric', 'Hybrid'].map((fuel) => (
-                      <button
-                        key={fuel}
-                        onClick={() => setFilters({ ...filters, fuel: fuel })}
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                          filters.fuel === fuel
-                            ? 'bg-gradient-gold text-white shadow-glow'
-                            : 'bg-secondary hover:bg-secondary/80 text-foreground'
-                        }`}
-                      >
-                        {fuel === 'all' ? 'All' : fuel}
-                      </button>
+                  <div className="space-y-2">
+                    {['Petrol', 'Diesel', 'Electric', 'Hybrid'].map((fuel) => (
+                      <div key={fuel} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`fuel-${fuel}`}
+                          checked={selectedFuels.includes(fuel)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedFuels([...selectedFuels, fuel]);
+                            } else {
+                              setSelectedFuels(selectedFuels.filter((f) => f !== fuel));
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor={`fuel-${fuel}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        >
+                          {fuel}
+                        </label>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -218,15 +247,18 @@ const Cars = () => {
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() =>
+                  onClick={() => {
                     setFilters({
                       carType: 'all',
                       priceRange: [0, 300],
                       transmission: 'all',
                       fuel: 'all',
                       sortBy: 'popularity',
-                    })
-                  }
+                    });
+                    setSelectedTypes([]);
+                    setSelectedTransmissions([]);
+                    setSelectedFuels([]);
+                  }}
                 >
                   Reset Filters
                 </Button>
@@ -270,15 +302,18 @@ const Cars = () => {
                 <Button
                   variant="outline"
                   className="mt-4"
-                  onClick={() =>
+                  onClick={() => {
                     setFilters({
                       carType: 'all',
                       priceRange: [0, 300],
                       transmission: 'all',
                       fuel: 'all',
                       sortBy: 'popularity',
-                    })
-                  }
+                    });
+                    setSelectedTypes([]);
+                    setSelectedTransmissions([]);
+                    setSelectedFuels([]);
+                  }}
                 >
                   Clear Filters
                 </Button>
