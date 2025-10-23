@@ -47,9 +47,7 @@ const Navbar = () => {
     <motion.nav 
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? 'glass-card' : 'bg-transparent'
-      }`}
+      className="fixed top-0 left-0 right-0 z-50 glass-card"
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
@@ -74,7 +72,7 @@ const Navbar = () => {
                 className={`text-sm font-medium transition-all duration-300 hover:text-gold relative group ${
                   location.pathname === link.path
                     ? 'text-gold'
-                    : 'text-white'
+                    : 'text-foreground dark:text-white'
                 }`}
               >
                 {link.label}
@@ -107,8 +105,9 @@ const Navbar = () => {
                     </Button>
                   </Link>
                 )}
-                <Button variant="ghost" size="icon" onClick={handleLogout} className="hover-glow text-white hover:text-gold">
-                  <LogOut className="w-5 h-5" />
+                <Button variant="ghost" size="sm" onClick={handleLogout} className="hover-glow text-foreground dark:text-white hover:text-gold gap-2">
+                  <LogOut className="w-4 h-4" />
+                  Logout
                 </Button>
               </div>
             ) : (
@@ -176,14 +175,14 @@ const Navbar = () => {
                   {isAuthenticated ? (
                     <>
                       {isAdmin && (
-                        <Link to="/admin">
+                        <Link to="/admin" onClick={() => setIsOpen(false)}>
                           <Button variant="outline" className="w-full gap-2" size="sm">
                             <Shield className="w-4 h-4" />
                             Admin
                           </Button>
                         </Link>
                       )}
-                      <Button variant="ghost" className="w-full" size="sm" onClick={handleLogout}>
+                      <Button variant="ghost" className="w-full justify-start" size="sm" onClick={() => { handleLogout(); setIsOpen(false); }}>
                         <LogOut className="w-4 h-4 mr-2" />
                         Logout
                       </Button>

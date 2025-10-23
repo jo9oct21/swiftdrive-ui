@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Star, Users, Gauge, Fuel, Check, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ const CarDetails = () => {
   const { toast } = useToast();
   const car = cars.find((c) => c.id === id);
   const relatedCars = cars.filter((c) => c.type === car?.type && c.id !== id).slice(0, 3);
+  const [selectedImage, setSelectedImage] = useState(0);
 
   const handleBooking = () => {
     if (!isAuthenticated) {
@@ -59,16 +61,42 @@ const CarDetails = () => {
             animate={{ opacity: 1, x: 0 }}
             className="space-y-4"
           >
+            {/* Main Image */}
             <motion.div 
               whileHover={{ scale: 1.02 }}
               className="aspect-video rounded-2xl overflow-hidden bg-gradient-card shadow-card border border-border/50"
             >
               <img
-                src={car.image}
+                src={car.images && car.images[selectedImage] ? car.images[selectedImage] : car.image}
                 alt={car.name}
                 className="w-full h-full object-cover"
               />
             </motion.div>
+
+            {/* Thumbnail Gallery */}
+            {car.images && car.images.length > 1 && (
+              <div className="grid grid-cols-4 gap-3">
+                {car.images.map((img, index) => (
+                  <motion.div
+                    key={index}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setSelectedImage(index)}
+                    className={`aspect-video rounded-lg overflow-hidden cursor-pointer border-2 transition-all ${
+                      selectedImage === index 
+                        ? 'border-gold shadow-lg' 
+                        : 'border-border/50 hover:border-gold/50'
+                    }`}
+                  >
+                    <img
+                      src={img}
+                      alt={`${car.name} view ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </motion.div>
+                ))}
+              </div>
+            )}
           </motion.div>
 
           {/* Car Info */}

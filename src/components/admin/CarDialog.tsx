@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Car } from '@/types/Car';
 import { useToast } from '@/hooks/use-toast';
-import { ImageUpload } from './ImageUpload';
+import ImageUpload from './ImageUpload';
 import { useEffect } from 'react';
 
 interface CarDialogProps {
@@ -32,6 +32,7 @@ export const CarDialog = ({ car, open, onOpenChange, onSave }: CarDialogProps) =
     rating: 5,
     reviews: 0,
     image: '',
+    images: [],
     features: [],
     description: '',
     mileage: '',
@@ -55,6 +56,7 @@ export const CarDialog = ({ car, open, onOpenChange, onSave }: CarDialogProps) =
         rating: 5,
         reviews: 0,
         image: '',
+        images: [],
         features: [],
         description: '',
         mileage: '',
@@ -69,9 +71,15 @@ export const CarDialog = ({ car, open, onOpenChange, onSave }: CarDialogProps) =
       return;
     }
 
+    if (!formData.images || formData.images.length === 0) {
+      toast({ title: 'Error', description: 'Please upload at least one image', variant: 'destructive' });
+      return;
+    }
+
     onSave({
       ...formData,
       id: car?.id || `car-${Date.now()}`,
+      image: formData.images[0],
     } as Car);
 
     toast({ title: 'Success', description: `Car ${car ? 'updated' : 'added'} successfully` });
@@ -202,8 +210,10 @@ export const CarDialog = ({ car, open, onOpenChange, onSave }: CarDialogProps) =
 
           <div className="col-span-2 space-y-2">
             <ImageUpload
-              value={formData.image}
-              onChange={(base64) => setFormData({ ...formData, image: base64 })}
+              value={formData.images || []}
+              onChange={(images) => setFormData({ ...formData, images, image: images[0] })}
+              maxImages={4}
+              required={true}
             />
           </div>
 

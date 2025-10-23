@@ -95,10 +95,10 @@ const MyBookings = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.02, y: -5 }}
-      transition={{ duration: 0.3 }}
+      whileHover={{ scale: 1.03, y: -8, rotateY: 1 }}
+      transition={{ duration: 0.4 }}
     >
-      <Card className="glass-card overflow-hidden border-border/50 hover:border-gold/50 transition-all duration-300">
+      <Card className="glass-card overflow-hidden border-border/50 hover:border-gold/50 hover:shadow-xl transition-all duration-400">
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row gap-6">
             {/* Car Image */}
@@ -152,16 +152,25 @@ const MyBookings = () => {
               <div className="flex gap-2 pt-2">
                 {booking.status === 'upcoming' && (
                   <>
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="default" 
+                      size="sm"
+                      className="bg-gradient-to-r from-primary to-accent hover:shadow-glow"
+                      onClick={() => navigate(`/car/${booking.id}`)}
+                    >
                       View Details
                     </Button>
-                    <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600">
-                      Cancel
+                    <Button variant="outline" size="sm" className="text-red-500 hover:text-red-600 hover:border-red-500">
+                      Cancel Booking
                     </Button>
                   </>
                 )}
                 {booking.status === 'completed' && (
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="default" 
+                    size="sm"
+                    className="bg-gradient-to-r from-green-500 to-emerald-500 hover:shadow-lg"
+                  >
                     Book Again
                   </Button>
                 )}
