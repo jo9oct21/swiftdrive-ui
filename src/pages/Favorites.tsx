@@ -3,10 +3,32 @@ import { Heart } from 'lucide-react';
 import CarCard from '@/components/CarCard';
 import { cars } from '@/data/cars';
 import { useFavorites } from '@/hooks/useFavorites';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 const Favorites = () => {
   const { favorites } = useFavorites();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const favoriteCars = cars.filter((car) => favorites.includes(car.id));
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      toast({ 
+        title: 'Authentication required', 
+        description: 'Please login to view your favorites',
+        variant: 'destructive' 
+      });
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate, toast]);
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/80 pt-24 pb-16">

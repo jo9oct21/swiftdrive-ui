@@ -1,18 +1,19 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Car, Heart, User, LogOut, Calendar } from 'lucide-react';
+import { Menu, X, Car, Heart, User, LogOut, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { useFavorites } from '@/hooks/useFavorites';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const { user, logout, isAuthenticated, isAdmin } = useAuth();
   const { toast } = useToast();
   const { favorites } = useFavorites();
 
@@ -22,16 +23,8 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
-
   const handleLogout = () => {
-    localStorage.removeItem('user');
-    setUser(null);
+    logout();
     toast({ title: 'Logged out', description: 'See you soon!' });
     navigate('/');
   };
@@ -48,7 +41,7 @@ const Navbar = () => {
     { path: '/my-bookings', label: 'My Bookings' },
   ];
 
-  const links = user ? userLinks : publicLinks;
+  const links = isAuthenticated ? userLinks : publicLinks;
 
   return (
     <motion.nav 
@@ -89,7 +82,7 @@ const Navbar = () => {
               </Link>
             ))}
             
-            {user && (
+            {isAuthenticated && (
               <Link to="/favorites" className="relative">
                 <Button variant="ghost" size="icon" className="hover-glow text-white hover:text-gold">
                   <Heart className="h-5 w-5" />
@@ -104,14 +97,17 @@ const Navbar = () => {
             
             <ThemeToggle />
             
-            {user ? (
+            {isAuthenticated ? (
               <div className="flex items-center gap-2">
-                {user.role === 'admin' && (
+                {isAdmin && (
                   <Link to="/admin">
-                    <Button variant="outline" size="sm">Admin</Button>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Shield className="w-4 h-4" />
+                      Admin
+                    </Button>
                   </Link>
                 )}
-                <Button variant="ghost" size="icon" onClick={handleLogout} className="hover-glow">
+                <Button variant="ghost" size="icon" onClick={handleLogout} className="hover-glow text-white hover:text-gold">
                   <LogOut className="w-5 h-5" />
                 </Button>
               </div>
@@ -161,7 +157,7 @@ const Navbar = () => {
                     {link.label}
                   </Link>
                 ))}
-                {user && (
+                {isAuthenticated && (
                   <Link
                     to="/favorites"
                     className="flex items-center gap-2 py-2 px-4 rounded-lg transition-all duration-300 text-foreground hover:bg-accent/10"
@@ -177,11 +173,12 @@ const Navbar = () => {
                   </Link>
                 )}
                 <div className="px-4 space-y-2">
-                  {user ? (
+                  {isAuthenticated ? (
                     <>
-                      {user.role === 'admin' && (
+                      {isAdmin && (
                         <Link to="/admin">
-                          <Button variant="outline" className="w-full" size="sm">
+                          <Button variant="outline" className="w-full gap-2" size="sm">
+                            <Shield className="w-4 h-4" />
                             Admin
                           </Button>
                         </Link>

@@ -1,15 +1,33 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Star, Users, Gauge, Fuel, Check, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cars } from '@/data/cars';
 import CarCard from '@/components/CarCard';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 const CarDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
   const car = cars.find((c) => c.id === id);
   const relatedCars = cars.filter((c) => c.type === car?.type && c.id !== id).slice(0, 3);
+
+  const handleBooking = () => {
+    if (!isAuthenticated) {
+      toast({ 
+        title: 'Login required', 
+        description: 'Please login to book a car',
+        variant: 'destructive' 
+      });
+      navigate('/login');
+    } else {
+      navigate('/booking', { state: { car } });
+    }
+  };
 
   if (!car) {
     return (
@@ -150,15 +168,13 @@ const CarDetails = () => {
                         <span className="text-lg text-muted-foreground">/ day</span>
                       </div>
                     </div>
-                    <Button asChild className="w-full bg-gradient-gold hover:shadow-glow" size="lg">
-                      <Link to="/booking" state={{ car }}>
-                        <motion.span
-                          animate={{ x: [0, 5, 0] }}
-                          transition={{ repeat: Infinity, duration: 1.5 }}
-                        >
-                          Book Now →
-                        </motion.span>
-                      </Link>
+                    <Button onClick={handleBooking} className="w-full bg-gradient-gold hover:shadow-glow" size="lg">
+                      <motion.span
+                        animate={{ x: [0, 5, 0] }}
+                        transition={{ repeat: Infinity, duration: 1.5 }}
+                      >
+                        {isAuthenticated ? 'Book Now' : 'Login to Book'} →
+                      </motion.span>
                     </Button>
                   </div>
                 </CardContent>

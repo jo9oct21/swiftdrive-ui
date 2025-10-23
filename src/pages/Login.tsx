@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -13,21 +14,22 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { login, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Demo login logic
-    if (email === 'admin@luxedrive.com' && password === 'admin') {
-      localStorage.setItem('user', JSON.stringify({ email, role: 'admin' }));
-      toast({ title: 'Welcome back!', description: 'Login successful' });
-      navigate('/admin');
-    } else if (email && password) {
-      localStorage.setItem('user', JSON.stringify({ email, role: 'user' }));
+    if (login(email, password)) {
       toast({ title: 'Welcome back!', description: 'Login successful' });
       navigate('/');
     } else {
-      toast({ title: 'Error', description: 'Please enter valid credentials', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Invalid email or password', variant: 'destructive' });
     }
   };
 
@@ -106,9 +108,11 @@ const Login = () => {
           </div>
 
           <div className="mt-6 pt-6 border-t border-border">
-            <p className="text-xs text-muted-foreground text-center">
-              Demo: admin@luxedrive.com / admin (for admin access)
-            </p>
+            <div className="text-xs text-muted-foreground text-center space-y-1">
+              <p className="font-semibold mb-2">Demo Accounts:</p>
+              <p>Admin: admin@luxedrive.com / admin123</p>
+              <p>User: user@luxedrive.com / user123</p>
+            </div>
           </div>
         </div>
       </motion.div>

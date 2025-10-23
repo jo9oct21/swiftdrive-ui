@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Car, Users, BookOpen, LogOut, UserCircle, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Car, Users, BookOpen, LogOut, UserCircle, Menu, X, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 const navItems = [
   { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
@@ -16,15 +17,29 @@ const AdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, logout, isAdmin } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  useEffect(() => {
+    if (!isAdmin) {
+      toast({ 
+        title: 'Access denied', 
+        description: 'You need admin privileges to access this page',
+        variant: 'destructive' 
+      });
+      navigate('/');
+    }
+  }, [isAdmin, navigate, toast]);
+
   const handleLogout = () => {
-    localStorage.removeItem('user');
+    logout();
     toast({ title: 'Logged out', description: 'See you soon!' });
-    navigate('/login');
+    navigate('/');
   };
 
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  if (!isAdmin) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
@@ -32,10 +47,10 @@ const AdminLayout = () => {
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-card/95 backdrop-blur-xl border-b border-border z-50 flex items-center justify-between px-4">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-gradient-gold flex items-center justify-center">
-            <UserCircle className="w-5 h-5 text-foreground" />
+            <Shield className="w-5 h-5 text-foreground" />
           </div>
           <div>
-            <p className="font-semibold text-sm">{user.name || 'Admin'}</p>
+            <p className="font-semibold text-sm">{user?.name || 'Admin'}</p>
             <p className="text-xs text-muted-foreground">Administrator</p>
           </div>
         </div>
@@ -77,10 +92,10 @@ const AdminLayout = () => {
         <aside className="hidden lg:block fixed left-0 top-0 h-screen w-64 bg-card/50 backdrop-blur-xl border-r border-border">
           <div className="p-6 border-b border-border flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gradient-gold flex items-center justify-center">
-              <UserCircle className="w-6 h-6 text-foreground" />
+              <Shield className="w-6 h-6 text-foreground" />
             </div>
             <div>
-              <p className="font-semibold text-sm">{user.name || 'Admin'}</p>
+              <p className="font-semibold text-sm">{user?.name || 'Admin'}</p>
               <p className="text-xs text-muted-foreground">Administrator</p>
             </div>
           </div>

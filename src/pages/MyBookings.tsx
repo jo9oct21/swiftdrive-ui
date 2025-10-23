@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, MapPin, Car, DollarSign, Clock } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 const demoBookings = [
   {
@@ -51,6 +54,24 @@ const demoBookings = [
 
 const MyBookings = () => {
   const [activeTab, setActiveTab] = useState('all');
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      toast({ 
+        title: 'Authentication required', 
+        description: 'Please login to view your bookings',
+        variant: 'destructive' 
+      });
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate, toast]);
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {

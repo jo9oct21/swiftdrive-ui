@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
@@ -26,41 +27,43 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="cars" element={<ManageCars />} />
-            <Route path="users" element={<ManageUsers />} />
-            <Route path="bookings" element={<ManageBookings />} />
-          </Route>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="cars" element={<ManageCars />} />
+              <Route path="users" element={<ManageUsers />} />
+              <Route path="bookings" element={<ManageBookings />} />
+            </Route>
 
-          <Route path="/*" element={
-            <>
-              <Navbar />
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/cars" element={<Cars />} />
-                <Route path="/car/:id" element={<CarDetails />} />
-                <Route path="/booking" element={<Booking />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/favorites" element={<Favorites />} />
-                <Route path="/my-bookings" element={<MyBookings />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-              <Footer />
-            </>
-          } />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+            <Route path="/*" element={
+              <>
+                <Navbar />
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/cars" element={<Cars />} />
+                  <Route path="/car/:id" element={<CarDetails />} />
+                  <Route path="/booking" element={<Booking />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/favorites" element={<Favorites />} />
+                  <Route path="/my-bookings" element={<MyBookings />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+                <Footer />
+              </>
+            } />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Calendar, MapPin, User, Mail, Phone, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,12 +6,25 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Booking = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
   const car = location.state?.car;
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      toast({ 
+        title: 'Authentication required', 
+        description: 'Please login to book a car',
+        variant: 'destructive' 
+      });
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate, toast]);
 
   const [formData, setFormData] = useState({
     name: '',
