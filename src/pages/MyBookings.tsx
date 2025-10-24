@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from 'next-themes';
 import bookingBg from '@/assets/car-sedan.jpg';
+import { BookingDetailsDialog } from '@/components/BookingDetailsDialog';
 
 const demoBookings = [
   {
@@ -56,6 +57,8 @@ const demoBookings = [
 
 const MyBookings = () => {
   const [activeTab, setActiveTab] = useState('all');
+  const [selectedBooking, setSelectedBooking] = useState<typeof demoBookings[0] | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -98,10 +101,10 @@ const MyBookings = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.03, y: -8, rotateY: 1 }}
-      transition={{ duration: 0.4 }}
+      whileHover={{ scale: 1.02, y: -4 }}
+      transition={{ duration: 0.3 }}
     >
-      <Card className="glass-card overflow-hidden border-border/50 hover:border-gold/50 hover:shadow-xl transition-all duration-400">
+      <Card className="glass-card overflow-hidden border-border/50 hover:border-gold/30 hover:shadow-glow transition-all duration-300">
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row gap-6">
             {/* Car Image */}
@@ -153,26 +156,27 @@ const MyBookings = () => {
               </div>
 
               <div className="flex gap-2 pt-2">
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  className="bg-gradient-gold hover:shadow-glow text-foreground"
+                  onClick={() => {
+                    setSelectedBooking(booking);
+                    setDialogOpen(true);
+                  }}
+                >
+                  View Details
+                </Button>
                 {booking.status === 'upcoming' && (
-                  <>
-                    <Button 
-                      variant="default" 
-                      size="sm"
-                      className="bg-gradient-to-r from-primary to-accent hover:shadow-glow"
-                      onClick={() => navigate(`/car/${booking.id}`)}
-                    >
-                      View Details
-                    </Button>
-                    <Button variant="outline" size="sm" className="text-red-500 hover:text-red-600 hover:border-red-500">
-                      Cancel Booking
-                    </Button>
-                  </>
+                  <Button variant="outline" size="sm" className="text-red-500 hover:text-red-600 hover:border-red-500">
+                    Cancel Booking
+                  </Button>
                 )}
                 {booking.status === 'completed' && (
                   <Button 
-                    variant="default" 
+                    variant="outline" 
                     size="sm"
-                    className="bg-gradient-to-r from-green-500 to-emerald-500 hover:shadow-lg"
+                    className="border-green-500 text-green-500 hover:bg-green-500 hover:text-white"
                   >
                     Book Again
                   </Button>
@@ -257,6 +261,12 @@ const MyBookings = () => {
             ))}
           </TabsContent>
         </Tabs>
+
+        <BookingDetailsDialog 
+          booking={selectedBooking}
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+        />
       </div>
     </div>
   );

@@ -198,7 +198,7 @@ const Home = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.3 }}
         >
-          <Button variant="outline" size="lg" asChild className="border-gold hover:bg-gold/10">
+          <Button variant="outline" size="lg" asChild className="border-gold text-gold hover:bg-gold hover:text-foreground">
             <Link to="/cars">View Entire Collection</Link>
           </Button>
         </motion.div>
@@ -303,13 +303,17 @@ const Home = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            <h2 className={`text-4xl md:text-5xl font-bold mb-6 ${
+              theme === 'light' ? 'text-foreground' : 'text-white'
+            }`}>
               Ready to Start Your Journey?
             </h2>
-            <p className="text-white/90 text-lg mb-10">
+            <p className={`text-lg mb-10 ${
+              theme === 'light' ? 'text-muted-foreground' : 'text-white/90'
+            }`}>
               Book your dream car today and experience luxury on the road like never before
             </p>
-            <Button size="lg" asChild className="bg-white text-primary hover:bg-white/90 font-semibold px-10 py-6 text-lg">
+            <Button size="lg" asChild className="bg-gradient-gold hover:shadow-glow text-foreground font-semibold px-10 py-6 text-lg">
               <Link to="/cars">
                 Browse All Cars
                 <ArrowRight className="ml-2 h-6 w-6" />

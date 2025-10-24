@@ -107,7 +107,7 @@ const CarCard = ({ car, index = 0 }: CarCardProps) => {
           </div>
         </CardContent>
         <CardFooter className="p-6 pt-0">
-          <Button asChild className="w-full bg-gradient-gold hover:shadow-glow transition-all duration-300 group">
+          <Button asChild className="w-full bg-gradient-gold hover:shadow-glow text-foreground transition-all duration-300 group">
             <Link to={`/car/${car.id}`}>
               View Details
               <motion.span

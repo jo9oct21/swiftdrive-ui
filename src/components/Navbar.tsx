@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Car, Heart, User, LogOut, Shield } from 'lucide-react';
+import { Menu, X, Car, Heart, User, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useAuth } from '@/contexts/AuthContext';
+import { ProfileDropdown } from '@/components/ProfileDropdown';
+import { useTheme } from 'next-themes';
 
 const Navbar = () => {
   const location = useLocation();
@@ -16,6 +18,7 @@ const Navbar = () => {
   const { user, logout, isAuthenticated, isAdmin } = useAuth();
   const { toast } = useToast();
   const { favorites } = useFavorites();
+  const { theme } = useTheme();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -82,8 +85,8 @@ const Navbar = () => {
             
             {isAuthenticated && (
               <Link to="/favorites" className="relative">
-                <Button variant="ghost" size="icon" className="hover-glow text-white hover:text-gold">
-                  <Heart className="h-5 w-5" />
+                <Button variant="ghost" size="icon" className="hover-glow hover:text-gold">
+                  <Heart className={`h-5 w-5 ${theme === 'light' ? 'text-foreground' : 'text-white'}`} />
                   {favorites.length > 0 && (
                     <span className="absolute -top-1 -right-1 bg-gold text-foreground text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
                       {favorites.length}
@@ -105,10 +108,7 @@ const Navbar = () => {
                     </Button>
                   </Link>
                 )}
-                <Button variant="ghost" size="sm" onClick={handleLogout} className="hover-glow text-foreground dark:text-white hover:text-gold gap-2">
-                  <LogOut className="w-4 h-4" />
-                  Logout
-                </Button>
+                <ProfileDropdown />
               </div>
             ) : (
               <Link to="/login">
@@ -182,10 +182,12 @@ const Navbar = () => {
                           </Button>
                         </Link>
                       )}
-                      <Button variant="ghost" className="w-full justify-start" size="sm" onClick={() => { handleLogout(); setIsOpen(false); }}>
-                        <LogOut className="w-4 h-4 mr-2" />
-                        Logout
-                      </Button>
+                      <Link to="/profile" onClick={() => setIsOpen(false)}>
+                        <Button variant="ghost" className="w-full justify-start" size="sm">
+                          <User className="w-4 h-4 mr-2" />
+                          Profile
+                        </Button>
+                      </Link>
                     </>
                   ) : (
                     <Link to="/login">

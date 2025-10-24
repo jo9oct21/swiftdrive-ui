@@ -1,5 +1,7 @@
 import { motion } from 'framer-motion';
-import { Car, Users, BookOpen, DollarSign, TrendingUp, Calendar } from 'lucide-react';
+import { Car, Users, BookOpen, DollarSign, TrendingUp, Calendar, Home } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import {
   Card,
@@ -26,9 +28,17 @@ const recentBookings = [
 const Dashboard = () => {
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-4xl font-bold text-gradient mb-2">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back, Admin</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-4xl font-bold text-gradient mb-2">Dashboard</h1>
+          <p className="text-muted-foreground">Welcome back, Admin</p>
+        </div>
+        <Link to="/">
+          <Button variant="outline" size="sm" className="gap-2">
+            <Home className="w-4 h-4" />
+            Back to Home
+          </Button>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
