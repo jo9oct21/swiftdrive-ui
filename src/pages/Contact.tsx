@@ -7,9 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useTheme } from 'next-themes';
 
 const Contact = () => {
   const { toast } = useToast();
+  const { theme } = useTheme();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -59,17 +61,23 @@ const Contact = () => {
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <div
-        className="relative py-32 text-white overflow-hidden"
+        className="relative py-32 overflow-hidden"
         style={{
-          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.5)), url(${contactBg})`,
+          backgroundImage: theme === 'light' 
+            ? `linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), url(${contactBg})`
+            : `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.5)), url(${contactBg})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundAttachment: 'fixed',
         }}
       >
         <div className="container mx-auto px-4 text-center relative z-10">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 animate-fade-in">Get In Touch</h1>
-          <p className="text-xl text-white/90 max-w-2xl mx-auto animate-fade-in-up">
+          <h1 className={`text-5xl md:text-6xl font-bold mb-6 animate-fade-in ${
+            theme === 'light' ? 'text-foreground' : 'text-white'
+          }`}>Get In Touch</h1>
+          <p className={`text-xl max-w-2xl mx-auto animate-fade-in-up ${
+            theme === 'light' ? 'text-muted-foreground' : 'text-white/90'
+          }`}>
             Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
           </p>
         </div>

@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { useTheme } from 'next-themes';
+import bookingBg from '@/assets/car-sedan.jpg';
 
 const demoBookings = [
   {
@@ -57,6 +59,7 @@ const MyBookings = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { theme } = useTheme();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -183,27 +186,30 @@ const MyBookings = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background pt-20">
-      <div className="bg-gradient-to-br from-primary via-primary/80 to-gold text-white py-20 relative overflow-hidden">
-        <motion.div
-          className="absolute inset-0 opacity-10"
-          animate={{
-            backgroundPosition: ['0% 0%', '100% 100%'],
-          }}
-          transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-          style={{
-            backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
-            backgroundSize: '50px 50px',
-          }}
-        />
+    <div className="min-h-screen bg-background">
+      {/* Hero Section */}
+      <div 
+        className="py-24 relative overflow-hidden"
+        style={{
+          backgroundImage: theme === 'light' 
+            ? `linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), url(${bookingBg})`
+            : `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url(${bookingBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
         <div className="container mx-auto px-4 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-5xl md:text-6xl font-bold mb-4">My Bookings</h1>
-            <p className="text-xl text-white/90 max-w-2xl">
+            <h1 className={`text-5xl md:text-6xl font-bold mb-4 ${
+              theme === 'light' ? 'text-foreground' : 'text-white'
+            }`}>My Bookings</h1>
+            <p className={`text-xl max-w-2xl ${
+              theme === 'light' ? 'text-muted-foreground' : 'text-white/90'
+            }`}>
               Track and manage all your car rental bookings
             </p>
           </motion.div>

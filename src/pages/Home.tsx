@@ -7,8 +7,10 @@ import AnimatedCounter from '@/components/AnimatedCounter';
 import { cars } from '@/data/cars';
 import heroBg from '@/assets/hero-bg.jpg';
 import { motion } from 'framer-motion';
+import { useTheme } from 'next-themes';
 
 const Home = () => {
+  const { theme } = useTheme();
   const featuredCars = cars.slice(0, 6);
 
   const benefits = [
@@ -63,7 +65,9 @@ const Home = () => {
       <section
         className="relative h-[700px] flex items-center justify-center text-center overflow-hidden"
         style={{
-          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.5)), url(${heroBg})`,
+          backgroundImage: theme === 'light' 
+            ? `linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.6)), url(${heroBg})`
+            : `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.5)), url(${heroBg})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundAttachment: 'fixed',
@@ -76,7 +80,9 @@ const Home = () => {
             transition={{ duration: 0.8 }}
           >
             <motion.h1
-              className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight"
+              className={`text-5xl md:text-7xl font-bold mb-6 leading-tight ${
+                theme === 'light' ? 'text-foreground' : 'text-white'
+              }`}
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
@@ -87,7 +93,9 @@ const Home = () => {
               </span>
             </motion.h1>
             <motion.p
-              className="text-xl md:text-2xl text-white/90 mb-10 max-w-3xl mx-auto"
+              className={`text-xl md:text-2xl mb-10 max-w-3xl mx-auto ${
+                theme === 'light' ? 'text-muted-foreground' : 'text-white/90'
+              }`}
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}

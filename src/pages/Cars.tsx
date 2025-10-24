@@ -3,6 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Filter } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTheme } from 'next-themes';
+import carBg from '@/assets/car-suv.jpg';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -19,6 +21,7 @@ import { cars } from '@/data/cars';
 import { SearchFilters } from '@/types/Car';
 
 const Cars = () => {
+  const { theme } = useTheme();
   const [searchParams] = useSearchParams();
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>({
@@ -90,7 +93,16 @@ const Cars = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="bg-gradient-to-br from-primary via-primary/80 to-gold text-white py-20 relative overflow-hidden">
+      <div 
+        className="py-20 relative overflow-hidden"
+        style={{
+          backgroundImage: theme === 'light' 
+            ? `linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), url(${carBg})`
+            : `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url(${carBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
         <motion.div
           className="absolute inset-0 opacity-10"
           animate={{ 
@@ -106,7 +118,9 @@ const Cars = () => {
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-5xl md:text-6xl font-bold mb-4"
+            className={`text-5xl md:text-6xl font-bold mb-4 ${
+              theme === 'light' ? 'text-foreground' : 'text-white'
+            }`}
           >
             Our Fleet
           </motion.h1>
@@ -114,7 +128,9 @@ const Cars = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-xl text-white/90 max-w-2xl"
+            className={`text-xl max-w-2xl ${
+              theme === 'light' ? 'text-muted-foreground' : 'text-white/90'
+            }`}
           >
             Explore our diverse collection of premium vehicles
           </motion.p>
