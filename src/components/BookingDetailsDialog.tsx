@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, MapPin, DollarSign, Car, User, Mail, Phone } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 interface Booking {
   id: number;
@@ -20,6 +21,7 @@ interface BookingDetailsDialogProps {
 }
 
 export function BookingDetailsDialog({ booking, open, onOpenChange }: BookingDetailsDialogProps) {
+  const { theme } = useTheme();
   if (!booking) return null;
 
   const getStatusColor = (status: string) => {
@@ -37,9 +39,13 @@ export function BookingDetailsDialog({ booking, open, onOpenChange }: BookingDet
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="glass-card max-w-2xl max-h-[90vh] overflow-y-auto text-foreground">
+      <DialogContent className={`glass-card max-w-2xl max-h-[90vh] overflow-y-auto ${
+        theme === 'light' ? 'text-foreground' : 'text-white'
+      }`}>
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-foreground">Booking Details</DialogTitle>
+          <DialogTitle className={`text-2xl font-bold ${
+            theme === 'light' ? 'text-foreground' : 'text-white'
+          }`}>Booking Details</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 pt-4">

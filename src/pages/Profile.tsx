@@ -174,7 +174,7 @@ const Profile = () => {
                 </div>
 
                 <div className="flex gap-4 pt-4">
-                  <Button type="submit" className="flex-1 bg-gradient-gold hover:shadow-glow">
+                  <Button type="submit" className="flex-1 bg-gradient-gold hover:shadow-glow text-foreground font-semibold">
                     Save Changes
                   </Button>
                   <Button type="button" variant="outline" onClick={() => navigate(-1)}>

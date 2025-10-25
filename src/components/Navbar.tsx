@@ -77,20 +77,34 @@ const Navbar = () => {
                 <span className={`text-sm font-medium transition-colors duration-300 ${
                   location.pathname === link.path
                     ? 'text-gold'
-                    : theme === 'light' ? 'text-foreground' : 'text-white'
+                    : theme === 'light' ? 'text-foreground hover:text-gold' : 'text-white hover:text-gold'
                 }`}>
                   {link.label}
                 </span>
-                <span className={`absolute -bottom-1 left-0 h-0.5 bg-gradient-gold transition-all duration-300 origin-left ${
-                  location.pathname === link.path ? 'w-full' : 'w-0 group-hover:w-full'
-                }`} />
+                <span 
+                  className="absolute -bottom-1 left-0 h-0.5 transition-all duration-300 origin-left"
+                  style={{
+                    width: location.pathname === link.path ? '100%' : '0%',
+                    background: location.pathname === link.path 
+                      ? 'linear-gradient(90deg, hsl(43 96% 56%) 0%, hsl(38 92% 50%) 100%)'
+                      : 'transparent'
+                  }}
+                />
+                <span 
+                  className="absolute -bottom-1 left-0 h-0.5 w-0 group-hover:w-full transition-all duration-300 origin-left"
+                  style={{
+                    background: 'linear-gradient(90deg, hsl(43 96% 56%) 0%, hsl(38 92% 50%) 100%)'
+                  }}
+                />
               </Link>
             ))}
             
             {isAuthenticated && (
               <Link to="/favorites" className="relative">
                 <Button variant="ghost" size="icon" className="hover-glow hover:text-gold">
-                  <Heart className={`h-5 w-5 ${theme === 'light' ? 'text-foreground' : 'text-white'}`} />
+                  <Heart className={`h-5 w-5 transition-colors ${
+                    theme === 'light' ? 'text-foreground hover:text-gold' : 'text-white hover:text-gold'
+                  }`} />
                   {favorites.length > 0 && (
                     <span className="absolute -top-1 -right-1 bg-gold text-foreground text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
                       {favorites.length}
