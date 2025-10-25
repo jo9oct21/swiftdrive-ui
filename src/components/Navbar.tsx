@@ -72,14 +72,18 @@ const Navbar = () => {
               <Link
                 key={link.path}
                 to={link.path}
-                className={`text-sm font-medium transition-all duration-300 hover:text-gold relative group ${
+                className="relative group"
+              >
+                <span className={`text-sm font-medium transition-colors duration-300 ${
                   location.pathname === link.path
                     ? 'text-gold'
-                    : 'text-foreground dark:text-white'
-                }`}
-              >
-                {link.label}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-gold transition-all duration-300 group-hover:w-full" />
+                    : theme === 'light' ? 'text-foreground' : 'text-white'
+                }`}>
+                  {link.label}
+                </span>
+                <span className={`absolute -bottom-1 left-0 h-0.5 bg-gradient-gold transition-all duration-300 origin-left ${
+                  location.pathname === link.path ? 'w-full' : 'w-0 group-hover:w-full'
+                }`} />
               </Link>
             ))}
             
@@ -99,17 +103,7 @@ const Navbar = () => {
             <ThemeToggle />
             
             {isAuthenticated ? (
-              <div className="flex items-center gap-2">
-                {isAdmin && (
-                  <Link to="/admin">
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Shield className="w-4 h-4" />
-                      Admin
-                    </Button>
-                  </Link>
-                )}
-                <ProfileDropdown />
-              </div>
+              <ProfileDropdown />
             ) : (
               <Link to="/login">
                 <Button variant="gradient" size="sm" className="shadow-lg">
@@ -173,22 +167,12 @@ const Navbar = () => {
                 )}
                 <div className="px-4 space-y-2">
                   {isAuthenticated ? (
-                    <>
-                      {isAdmin && (
-                        <Link to="/admin" onClick={() => setIsOpen(false)}>
-                          <Button variant="outline" className="w-full gap-2" size="sm">
-                            <Shield className="w-4 h-4" />
-                            Admin
-                          </Button>
-                        </Link>
-                      )}
-                      <Link to="/profile" onClick={() => setIsOpen(false)}>
-                        <Button variant="ghost" className="w-full justify-start" size="sm">
-                          <User className="w-4 h-4 mr-2" />
-                          Profile
-                        </Button>
-                      </Link>
-                    </>
+                    <Link to="/profile" onClick={() => setIsOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start" size="sm">
+                        <User className="w-4 h-4 mr-2" />
+                        Profile
+                      </Button>
+                    </Link>
                   ) : (
                     <Link to="/login">
                       <Button variant="gradient" className="w-full" size="sm">

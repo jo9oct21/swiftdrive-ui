@@ -37,9 +37,9 @@ export function BookingDetailsDialog({ booking, open, onOpenChange }: BookingDet
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="glass-card max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="glass-card max-w-2xl max-h-[90vh] overflow-y-auto text-foreground">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">Booking Details</DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-foreground">Booking Details</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 pt-4">

@@ -167,7 +167,7 @@ const Home = () => {
                 className="text-center"
               >
                 <AnimatedCounter end={stat.end} suffix={stat.suffix} />
-                <p className="text-white/90 mt-2 font-medium">{stat.label}</p>
+                <p className={`mt-2 font-medium ${theme === 'light' ? 'text-foreground' : 'text-white/90'}`}>{stat.label}</p>
               </motion.div>
             ))}
           </div>
