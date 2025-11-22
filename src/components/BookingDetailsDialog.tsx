@@ -94,11 +94,11 @@ export function BookingDetailsDialog({ booking, open, onOpenChange }: BookingDet
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-gradient-gold md:col-span-2">
-                <DollarSign className="h-5 w-5 text-foreground mt-0.5" />
+              <div className="flex items-start gap-3 p-3 rounded-lg border border-gold/30 bg-secondary/10 md:col-span-2">
+                <DollarSign className="h-5 w-5 text-gold mt-0.5" />
                 <div>
-                  <p className="text-sm text-foreground/80">Total Amount</p>
-                  <p className="text-2xl font-bold text-foreground">${booking.total}</p>
+                  <p className="text-sm text-muted-foreground">Total Amount</p>
+                  <p className="text-2xl font-bold text-gold">${booking.total}</p>
                 </div>
               </div>
             </div>
