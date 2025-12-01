@@ -19,6 +19,7 @@ import Favorites from "./pages/Favorites";
 import MyBookings from "./pages/MyBookings";
 import Profile from "./pages/Profile";
 import ChangePassword from "./pages/ChangePassword";
+import Settings from "./pages/Settings";
 import AdminLayout from "./components/admin/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import ManageCars from "./pages/admin/ManageCars";
@@ -59,6 +60,7 @@ const App = () => (
                   <Route path="/my-bookings" element={<MyBookings />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/profile/change-password" element={<ChangePassword />} />
+                  <Route path="/settings" element={<Settings />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
                 <Footer />
