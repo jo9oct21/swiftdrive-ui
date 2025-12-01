@@ -50,15 +50,9 @@ export function ProfileDropdown() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild className="cursor-pointer">
-          <Link to="/profile" className="flex items-center">
+          <Link to="/settings" className="flex items-center">
             <Settings className="mr-2 h-4 w-4" />
-            <span>Update Profile</span>
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild className="cursor-pointer">
-          <Link to="/profile/change-password" className="flex items-center">
-            <User className="mr-2 h-4 w-4" />
-            <span>Change Password</span>
+            <span>Settings</span>
           </Link>
         </DropdownMenuItem>
         {isAdmin && (
