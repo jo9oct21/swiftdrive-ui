@@ -1,4 +1,4 @@
-import { User, Settings, LogOut, Trash2, Shield } from 'lucide-react';
+import { User, Settings, LogOut, Trash2, Shield, Clock } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   DropdownMenu,
@@ -53,6 +53,12 @@ export function ProfileDropdown() {
           <Link to="/settings" className="flex items-center">
             <Settings className="mr-2 h-4 w-4" />
             <span>Settings</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild className="cursor-pointer">
+          <Link to="/history" className="flex items-center">
+            <Clock className="mr-2 h-4 w-4" />
+            <span>History</span>
           </Link>
         </DropdownMenuItem>
         {isAdmin && (

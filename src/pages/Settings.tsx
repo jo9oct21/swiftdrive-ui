@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Phone, MapPin, Calendar, Lock, Eye, EyeOff, Shield, Smartphone, Clock } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Calendar, Lock, Eye, EyeOff, Shield, Smartphone, Clock, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
@@ -38,6 +39,8 @@ const Settings = () => {
     new: false,
     confirm: false,
   });
+
+  const { notificationsEnabled, setNotificationsEnabled } = useNotifications();
 
   const [securitySettings, setSecuritySettings] = useState({
     twoFactorEnabled: false,
@@ -355,6 +358,22 @@ const Settings = () => {
                         <Switch
                           checked={securitySettings.emailNotifications}
                           onCheckedChange={(checked) => setSecuritySettings({ ...securitySettings, emailNotifications: checked })}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 glass-card rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-full bg-primary/10">
+                            <Bell className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold">Notification Icon</h3>
+                            <p className="text-sm text-muted-foreground">Show notification bell in navbar</p>
+                          </div>
+                        </div>
+                        <Switch
+                          checked={notificationsEnabled}
+                          onCheckedChange={setNotificationsEnabled}
                         />
                       </div>
 
