@@ -94,7 +94,7 @@ const CarDetails = () => {
             <div className="flex items-start justify-between mb-6">
               <div>
                 <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                  className="text-4xl md:text-5xl font-bold mb-3 bg-gradient-premium bg-clip-text text-transparent">
+                  className="text-4xl md:text-5xl font-bold mb-3">
                   {car.name}
                 </motion.h1>
                 <p className="text-xl text-muted-foreground">{car.type} • {car.year}</p>

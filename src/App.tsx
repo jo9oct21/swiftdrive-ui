@@ -32,6 +32,7 @@ import Dashboard from "./pages/admin/Dashboard";
 import ManageCars from "./pages/admin/ManageCars";
 import ManageUsers from "./pages/admin/ManageUsers";
 import ManageBookings from "./pages/admin/ManageBookings";
+import AdminHistory from "./pages/admin/AdminHistory";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,7 @@ const App = () => (
                 <Route path="cars" element={<ManageCars />} />
                 <Route path="users" element={<ManageUsers />} />
                 <Route path="bookings" element={<ManageBookings />} />
+                <Route path="history" element={<AdminHistory />} />
               </Route>
 
               <Route path="/*" element={

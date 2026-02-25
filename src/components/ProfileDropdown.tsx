@@ -1,19 +1,17 @@
-import { User, Settings, LogOut, Trash2, Shield, Clock } from 'lucide-react';
+import { User, Settings, LogOut, Trash2, Shield } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 export function ProfileDropdown() {
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout, deleteAccount, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -23,13 +21,13 @@ export function ProfileDropdown() {
     navigate('/');
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase();
+  const handleDeleteAccount = () => {
+    deleteAccount();
+    toast({ title: 'Account Deleted', description: 'Your account has been permanently deleted.', variant: 'destructive' });
+    navigate('/');
   };
+
+  const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase();
 
   return (
     <DropdownMenu>
@@ -55,12 +53,6 @@ export function ProfileDropdown() {
             <span>Settings</span>
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild className="cursor-pointer">
-          <Link to="/history" className="flex items-center">
-            <Clock className="mr-2 h-4 w-4" />
-            <span>History</span>
-          </Link>
-        </DropdownMenuItem>
         {isAdmin && (
           <>
             <DropdownMenuSeparator />
@@ -77,10 +69,28 @@ export function ProfileDropdown() {
           <LogOut className="mr-2 h-4 w-4" />
           <span>Logout</span>
         </DropdownMenuItem>
-        <DropdownMenuItem className="cursor-pointer text-red-500 focus:text-red-600">
-          <Trash2 className="mr-2 h-4 w-4" />
-          <span>Delete Account</span>
-        </DropdownMenuItem>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="cursor-pointer text-red-500 focus:text-red-600">
+              <Trash2 className="mr-2 h-4 w-4" />
+              <span>Delete Account</span>
+            </DropdownMenuItem>
+          </AlertDialogTrigger>
+          <AlertDialogContent className="glass-card">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Account</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete your account and remove all your data.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Delete Account
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DropdownMenuContent>
     </DropdownMenu>
   );

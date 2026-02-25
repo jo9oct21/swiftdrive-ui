@@ -20,7 +20,7 @@ const Navbar = () => {
   const { toast } = useToast();
   const { favorites } = useFavorites();
   const { theme } = useTheme();
-  const { unreadCount, notificationsEnabled } = useNotifications();
+  const { unreadCount, notificationsEnabled, favoritesEnabled } = useNotifications();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -83,18 +83,20 @@ const Navbar = () => {
             
             {isAuthenticated && (
               <>
-                <Link to="/favorites" className="relative">
-                  <Button variant="ghost" size="icon" className="hover-glow hover:text-gold">
-                    <Heart className={`h-5 w-5 transition-colors ${
-                      theme === 'light' ? 'text-foreground hover:text-gold' : 'text-white hover:text-gold'
-                    }`} />
-                    {favorites.length > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-gold text-foreground text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
-                        {favorites.length}
-                      </span>
-                    )}
-                  </Button>
-                </Link>
+                {favoritesEnabled && (
+                  <Link to="/favorites" className="relative">
+                    <Button variant="ghost" size="icon" className="hover-glow hover:text-gold">
+                      <Heart className={`h-5 w-5 transition-colors ${
+                        theme === 'light' ? 'text-foreground hover:text-gold' : 'text-white hover:text-gold'
+                      }`} />
+                      {favorites.length > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                          {favorites.length}
+                        </span>
+                      )}
+                    </Button>
+                  </Link>
+                )}
 
                 {notificationsEnabled && (
                   <Link to="/notifications" className="relative">
@@ -147,23 +149,22 @@ const Navbar = () => {
             >
               <div className="py-4 space-y-4">
                 {links.map((link) => (
-                  <Link
-                    key={link.path}
-                    to={link.path}
+                  <Link key={link.path} to={link.path}
                     className={`block py-2 px-4 rounded-lg transition-all duration-300 ${
                       location.pathname === link.path ? 'glass-card text-gold' : 'text-foreground hover:bg-accent/10'
                     }`}
-                    onClick={() => setIsOpen(false)}
-                  >
+                    onClick={() => setIsOpen(false)}>
                     {link.label}
                   </Link>
                 ))}
                 {isAuthenticated && (
                   <>
-                    <Link to="/favorites" className="flex items-center gap-2 py-2 px-4 rounded-lg transition-all duration-300 text-foreground hover:bg-accent/10" onClick={() => setIsOpen(false)}>
-                      <Heart className="w-4 h-4" /> Favorites
-                      {favorites.length > 0 && <span className="ml-auto bg-gold text-foreground text-xs px-2 py-0.5 rounded-full font-bold">{favorites.length}</span>}
-                    </Link>
+                    {favoritesEnabled && (
+                      <Link to="/favorites" className="flex items-center gap-2 py-2 px-4 rounded-lg transition-all duration-300 text-foreground hover:bg-accent/10" onClick={() => setIsOpen(false)}>
+                        <Heart className="w-4 h-4" /> Favorites
+                        {favorites.length > 0 && <span className="ml-auto bg-destructive text-destructive-foreground text-xs px-2 py-0.5 rounded-full font-bold">{favorites.length}</span>}
+                      </Link>
+                    )}
                     {notificationsEnabled && (
                       <Link to="/notifications" className="flex items-center gap-2 py-2 px-4 rounded-lg transition-all duration-300 text-foreground hover:bg-accent/10" onClick={() => setIsOpen(false)}>
                         <Bell className="w-4 h-4" /> Notifications

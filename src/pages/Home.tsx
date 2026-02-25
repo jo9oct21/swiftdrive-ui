@@ -154,7 +154,7 @@ const Home = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="bg-gradient-premium py-20 mb-20">
+      <section className="py-20 mb-20" style={{ backgroundColor: '#D3D3D3' }}>
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
@@ -294,7 +294,7 @@ const Home = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-gradient-premium py-24 relative overflow-hidden">
+      <section className="py-24 relative overflow-hidden" style={{ backgroundColor: '#D3D3D3' }}>
         <div className="container mx-auto px-4 relative z-10">
           <motion.div
             className="text-center max-w-3xl mx-auto"
