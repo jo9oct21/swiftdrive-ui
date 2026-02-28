@@ -23,6 +23,7 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { useNotifications } from '@/contexts/NotificationContext';
 
 const penaltyTypes = [
   { id: 'late_return', label: 'Late Return', amount: 50 },
@@ -33,10 +34,10 @@ const penaltyTypes = [
 ];
 
 const demoBookings = [
-  { id: 1, user: 'John Doe', car: 'Tesla Model 3', startDate: '2025-10-22', endDate: '2025-10-25', total: 267, status: 'Active', penalty: null as string | null },
-  { id: 2, user: 'Jane Smith', car: 'BMW X5', startDate: '2025-10-23', endDate: '2025-10-27', total: 500, status: 'Pending', penalty: null as string | null },
-  { id: 3, user: 'Mike Johnson', car: 'Porsche 911', startDate: '2025-10-20', endDate: '2025-10-22', total: 598, status: 'Completed', penalty: 'late_return' },
-  { id: 4, user: 'Sarah Wilson', car: 'Mercedes C-Class', startDate: '2025-10-24', endDate: '2025-10-28', total: 380, status: 'Active', penalty: null as string | null },
+  { id: 1, user: 'John Doe', car: 'Tesla Model 3', startDate: '2025-10-22', endDate: '2025-10-25', baseCost: 267, penaltyAmount: 0, status: 'Active', penalty: null as string | null },
+  { id: 2, user: 'Jane Smith', car: 'BMW X5', startDate: '2025-10-23', endDate: '2025-10-27', baseCost: 500, penaltyAmount: 0, status: 'Pending', penalty: null as string | null },
+  { id: 3, user: 'Mike Johnson', car: 'Porsche 911', startDate: '2025-10-20', endDate: '2025-10-22', baseCost: 548, penaltyAmount: 50, status: 'Completed', penalty: 'late_return' },
+  { id: 4, user: 'Sarah Wilson', car: 'Mercedes C-Class', startDate: '2025-10-24', endDate: '2025-10-28', baseCost: 380, penaltyAmount: 0, status: 'Active', penalty: null as string | null },
 ];
 
 const ManageBookings = () => {
@@ -47,6 +48,7 @@ const ManageBookings = () => {
   const [penaltyDialogOpen, setPenaltyDialogOpen] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
   const [selectedPenalty, setSelectedPenalty] = useState('');
+  const { addNotification } = useNotifications();
 
   const handleCompleteBooking = (id: number) => {
     setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'Completed' } : b));
@@ -56,10 +58,22 @@ const ManageBookings = () => {
   const handleAddPenalty = () => {
     if (!selectedBookingId || !selectedPenalty) return;
     const penalty = penaltyTypes.find(p => p.id === selectedPenalty);
-    setBookings(prev => prev.map(b => 
-      b.id === selectedBookingId ? { ...b, penalty: selectedPenalty, total: b.total + (penalty?.amount || 0) } : b
+    const booking = bookings.find(b => b.id === selectedBookingId);
+    
+    setBookings(prev => prev.map(b =>
+      b.id === selectedBookingId
+        ? { ...b, penalty: selectedPenalty, penaltyAmount: penalty?.amount || 0 }
+        : b
     ));
-    toast({ title: "Penalty Applied", description: `${penalty?.label} penalty of $${penalty?.amount} has been added.` });
+
+    // Send notification to user about the penalty
+    addNotification({
+      title: `Penalty Applied: ${penalty?.label}`,
+      message: `A ${penalty?.label} penalty of $${penalty?.amount} has been applied to your booking for ${booking?.car}. Total: $${(booking?.baseCost || 0) + (penalty?.amount || 0)}`,
+      type: 'penalty',
+    });
+
+    toast({ title: "Penalty Applied", description: `${penalty?.label} penalty of $${penalty?.amount} has been added and user notified.` });
     setPenaltyDialogOpen(false);
     setSelectedPenalty('');
   };
@@ -69,8 +83,7 @@ const ManageBookings = () => {
       booking.user.toLowerCase().includes(search.toLowerCase()) ||
       booking.car.toLowerCase().includes(search.toLowerCase()) ||
       booking.startDate.includes(search) ||
-      booking.endDate.includes(search) ||
-      booking.total.toString().includes(search);
+      booking.endDate.includes(search);
     const matchesStatus = !statusFilter || booking.status === statusFilter;
     const matchesDateRange =
       (!dateRange.from || new Date(booking.startDate) >= dateRange.from) &&
@@ -143,9 +156,10 @@ const ManageBookings = () => {
               <TableHead>Car</TableHead>
               <TableHead>Start Date</TableHead>
               <TableHead>End Date</TableHead>
+              <TableHead>Base Cost</TableHead>
+              <TableHead>Penalty</TableHead>
               <TableHead>Total</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Penalty</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -157,7 +171,20 @@ const ManageBookings = () => {
                 <TableCell>{booking.car}</TableCell>
                 <TableCell>{booking.startDate}</TableCell>
                 <TableCell>{booking.endDate}</TableCell>
-                <TableCell className="font-bold">${booking.total}</TableCell>
+                <TableCell className="font-medium">${booking.baseCost}</TableCell>
+                <TableCell>
+                  {booking.penaltyAmount > 0 ? (
+                    <span className="text-destructive font-bold">
+                      +${booking.penaltyAmount}
+                      <span className="block text-xs font-normal">
+                        {penaltyTypes.find(p => p.id === booking.penalty)?.label}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">None</span>
+                  )}
+                </TableCell>
+                <TableCell className="font-bold">${booking.baseCost + booking.penaltyAmount}</TableCell>
                 <TableCell>
                   <span className={`px-2 py-1 rounded-full text-xs ${
                     booking.status === 'Active' ? 'bg-green-500/20 text-green-500'
@@ -166,16 +193,6 @@ const ManageBookings = () => {
                   }`}>
                     {booking.status}
                   </span>
-                </TableCell>
-                <TableCell>
-                  {booking.penalty ? (
-                    <Badge variant="destructive" className="text-xs">
-                      <AlertTriangle className="h-3 w-3 mr-1" />
-                      {penaltyTypes.find(p => p.id === booking.penalty)?.label}
-                    </Badge>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">None</span>
-                  )}
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-2">
@@ -198,7 +215,6 @@ const ManageBookings = () => {
         </Table>
       </motion.div>
 
-      {/* Penalty Dialog */}
       <Dialog open={penaltyDialogOpen} onOpenChange={setPenaltyDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -207,7 +223,7 @@ const ManageBookings = () => {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">Select the type of penalty to apply to this booking.</p>
+            <p className="text-sm text-muted-foreground">Select the type of penalty to apply. The user will be notified.</p>
             <Select value={selectedPenalty} onValueChange={setSelectedPenalty}>
               <SelectTrigger><SelectValue placeholder="Select penalty type" /></SelectTrigger>
               <SelectContent>

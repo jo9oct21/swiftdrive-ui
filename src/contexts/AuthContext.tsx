@@ -4,7 +4,7 @@ interface User {
   id: string;
   email: string;
   name: string;
-  role: 'user' | 'admin';
+  role: 'user' | 'admin' | 'superadmin';
   profileImage?: string;
 }
 
@@ -15,11 +15,13 @@ interface AuthContextType {
   deleteAccount: () => void;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const DEMO_USERS = {
+  superadmin: { id: '0', email: 'superadmin@luxedrive.com', password: 'super123', name: 'Super Admin', role: 'superadmin' as const },
   admin: { id: '1', email: 'admin@luxedrive.com', password: 'admin123', name: 'Admin User', role: 'admin' as const },
   user: { id: '2', email: 'user@luxedrive.com', password: 'user123', name: 'John Doe', role: 'user' as const },
 };
@@ -55,7 +57,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, deleteAccount, isAuthenticated: !!user, isAdmin: user?.role === 'admin' }}>
+    <AuthContext.Provider value={{ user, login, logout, deleteAccount, isAuthenticated: !!user, isAdmin: user?.role === 'admin' || user?.role === 'superadmin', isSuperAdmin: user?.role === 'superadmin' }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,36 +1,31 @@
 import { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Car, Users, BookOpen, LogOut, Menu, X, Shield, Clock } from 'lucide-react';
+import { LayoutDashboard, Users, Shield, LogOut, Menu, X, Crown, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
 const navItems = [
-  { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
-  { name: 'Cars', path: '/admin/cars', icon: Car },
-  { name: 'Users', path: '/admin/users', icon: Users },
-  { name: 'Bookings', path: '/admin/bookings', icon: BookOpen },
-  { name: 'History', path: '/admin/history', icon: Clock },
+  { name: 'Dashboard', path: '/superadmin', icon: LayoutDashboard },
+  { name: 'Users', path: '/superadmin/users', icon: Users },
+  { name: 'Admins', path: '/superadmin/admins', icon: Shield },
+  { name: 'History', path: '/superadmin/history', icon: Clock },
 ];
 
-const AdminLayout = () => {
+const SuperAdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, logout, isAdmin, isSuperAdmin } = useAuth();
+  const { user, logout, isSuperAdmin } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    if (!isAdmin) {
-      toast({ 
-        title: 'Access denied', 
-        description: 'You need admin privileges to access this page',
-        variant: 'destructive' 
-      });
+    if (!isSuperAdmin) {
+      toast({ title: 'Access denied', description: 'You need super admin privileges', variant: 'destructive' });
       navigate('/');
     }
-  }, [isAdmin, navigate, toast]);
+  }, [isSuperAdmin, navigate, toast]);
 
   const handleLogout = () => {
     logout();
@@ -38,21 +33,18 @@ const AdminLayout = () => {
     navigate('/');
   };
 
-  if (!isAdmin) {
-    return null;
-  }
+  if (!isSuperAdmin) return null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-card/95 backdrop-blur-xl border-b border-border z-50 flex items-center justify-between px-4">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-gradient-gold flex items-center justify-center">
-            <Shield className="w-5 h-5 text-foreground" />
+            <Crown className="w-5 h-5 text-foreground" />
           </div>
           <div>
-            <p className="font-semibold text-sm">{user?.name || 'Admin'}</p>
-            <p className="text-xs text-muted-foreground">Administrator</p>
+            <p className="font-semibold text-sm">{user?.name || 'Super Admin'}</p>
+            <p className="text-xs text-muted-foreground">Super Administrator</p>
           </div>
         </div>
         <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
@@ -60,7 +52,6 @@ const AdminLayout = () => {
         </Button>
       </div>
 
-      {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="lg:hidden fixed top-16 left-0 right-0 bottom-0 bg-card/95 backdrop-blur-xl z-40 p-4">
           <nav className="space-y-2">
@@ -81,23 +72,21 @@ const AdminLayout = () => {
           <div className="mt-6 space-y-4 pt-4 border-t border-border">
             <ThemeToggle />
             <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
-              <LogOut className="w-5 h-5 mr-3" />
-              Logout
+              <LogOut className="w-5 h-5 mr-3" /> Logout
             </Button>
           </div>
         </div>
       )}
 
       <div className="flex">
-        {/* Desktop Sidebar */}
         <aside className="hidden lg:block fixed left-0 top-0 h-screen w-64 bg-card/50 backdrop-blur-xl border-r border-border">
           <div className="p-6 border-b border-border flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gradient-gold flex items-center justify-center">
-              <Shield className="w-6 h-6 text-foreground" />
+              <Crown className="w-6 h-6 text-foreground" />
             </div>
             <div>
-              <p className="font-semibold text-sm">{user?.name || 'Admin'}</p>
-              <p className="text-xs text-muted-foreground">Administrator</p>
+              <p className="font-semibold text-sm">{user?.name || 'Super Admin'}</p>
+              <p className="text-xs text-muted-foreground">Super Administrator</p>
             </div>
           </div>
           <div className="p-6 flex flex-col h-[calc(100vh-5rem)]">
@@ -119,14 +108,12 @@ const AdminLayout = () => {
             <div className="space-y-4 pt-4 border-t border-border">
               <ThemeToggle />
               <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
-                <LogOut className="w-5 h-5 mr-3" />
-                Logout
+                <LogOut className="w-5 h-5 mr-3" /> Logout
               </Button>
             </div>
           </div>
         </aside>
 
-        {/* Main Content */}
         <main className="flex-1 lg:ml-64 pt-16 lg:pt-0 p-4 lg:p-8 overflow-x-hidden">
           <Outlet />
         </main>
@@ -135,4 +122,4 @@ const AdminLayout = () => {
   );
 };
 
-export default AdminLayout;
+export default SuperAdminLayout;
