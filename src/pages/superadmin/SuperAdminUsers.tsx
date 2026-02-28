@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Shield, MoreHorizontal, Ban } from 'lucide-react';
+import { Search, MoreHorizontal, Ban, Shield } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -18,16 +18,17 @@ import {
 const demoUsers = [
   { id: 1, name: 'John Doe', email: 'john@example.com', role: 'User', status: 'Active', bookings: 5 },
   { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'User', status: 'Active', bookings: 12 },
-  { id: 3, name: 'Admin User', email: 'admin@luxedrive.com', role: 'Admin', status: 'Active', bookings: 0 },
-  { id: 4, name: 'Mike Johnson', email: 'mike@example.com', role: 'User', status: 'Inactive', bookings: 3 },
+  { id: 3, name: 'Mike Johnson', email: 'mike@example.com', role: 'User', status: 'Inactive', bookings: 3 },
+  { id: 4, name: 'Sarah Wilson', email: 'sarah@example.com', role: 'User', status: 'Active', bookings: 8 },
 ];
 
-const ManageUsers = () => {
+const SuperAdminUsers = () => {
   const { toast } = useToast();
   const [search, setSearch] = useState('');
   const [userList, setUserList] = useState(demoUsers);
-  const [suspendDialogOpen, setSuspendDialogOpen] = useState(false);
-  const [userToSuspend, setUserToSuspend] = useState<number | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogAction, setDialogAction] = useState<'suspend' | 'makeAdmin'>('suspend');
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
 
   const filteredUsers = userList.filter(
     (user) =>
@@ -35,35 +36,41 @@ const ManageUsers = () => {
       user.email.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleSuspendClick = (userId: number) => {
-    setUserToSuspend(userId);
-    setSuspendDialogOpen(true);
+  const handleAction = (userId: number, action: 'suspend' | 'makeAdmin') => {
+    setSelectedUserId(userId);
+    setDialogAction(action);
+    setDialogOpen(true);
   };
 
-  const handleSuspendConfirm = () => {
-    if (userToSuspend) {
-      setUserList(userList.map((u) =>
-        u.id === userToSuspend
+  const handleConfirm = () => {
+    if (!selectedUserId) return;
+
+    if (dialogAction === 'suspend') {
+      setUserList(prev => prev.map(u =>
+        u.id === selectedUserId
           ? { ...u, status: u.status === 'Suspended' ? 'Active' : 'Suspended' }
           : u
       ));
-      const user = userList.find(u => u.id === userToSuspend);
-      const action = user?.status === 'Suspended' ? 'unsuspended' : 'suspended';
-      toast({ title: 'Success', description: `User ${action} successfully` });
+      const user = userList.find(u => u.id === selectedUserId);
+      toast({ title: 'Success', description: `User ${user?.status === 'Suspended' ? 'unsuspended' : 'suspended'} successfully` });
+    } else {
+      setUserList(prev => prev.map(u =>
+        u.id === selectedUserId ? { ...u, role: 'Admin' } : u
+      ));
+      toast({ title: 'Success', description: 'User promoted to Admin' });
     }
-    setSuspendDialogOpen(false);
-    setUserToSuspend(null);
+
+    setDialogOpen(false);
+    setSelectedUserId(null);
   };
 
-  const suspendingUser = userList.find(u => u.id === userToSuspend);
+  const selectedUser = userList.find(u => u.id === selectedUserId);
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-4xl font-bold text-gradient mb-2">Manage Users</h1>
-          <p className="text-muted-foreground">View and manage user accounts</p>
-        </div>
+      <div>
+        <h1 className="text-4xl font-bold text-gradient mb-2">Manage Users</h1>
+        <p className="text-muted-foreground">View and manage all user accounts</p>
       </div>
 
       <div className="relative max-w-md">
@@ -107,15 +114,18 @@ const ManageUsers = () => {
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
+                      <Button variant="ghost" size="icon"><MoreHorizontal className="w-4 h-4" /></Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleSuspendClick(user.id)}>
+                      <DropdownMenuItem onClick={() => handleAction(user.id, 'suspend')}>
                         <Ban className="w-4 h-4 mr-2" />
                         {user.status === 'Suspended' ? 'Unsuspend' : 'Suspend'}
                       </DropdownMenuItem>
+                      {user.role !== 'Admin' && (
+                        <DropdownMenuItem onClick={() => handleAction(user.id, 'makeAdmin')}>
+                          <Shield className="w-4 h-4 mr-2" /> Make Admin
+                        </DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
@@ -125,23 +135,25 @@ const ManageUsers = () => {
         </Table>
       </motion.div>
 
-      <AlertDialog open={suspendDialogOpen} onOpenChange={setSuspendDialogOpen}>
+      <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {suspendingUser?.status === 'Suspended' ? 'Unsuspend User?' : 'Suspend User?'}
+              {dialogAction === 'suspend'
+                ? (selectedUser?.status === 'Suspended' ? 'Unsuspend User?' : 'Suspend User?')
+                : 'Promote to Admin?'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {suspendingUser?.status === 'Suspended'
-                ? 'This will restore the user\'s access to their account.'
-                : 'This will temporarily block the user from accessing their account.'}
+              {dialogAction === 'suspend'
+                ? (selectedUser?.status === 'Suspended'
+                    ? 'This will restore the user\'s access.'
+                    : 'This will temporarily block the user from accessing their account.')
+                : 'This will give the user admin privileges.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleSuspendConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {suspendingUser?.status === 'Suspended' ? 'Unsuspend' : 'Suspend'}
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirm}>Confirm</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -149,4 +161,4 @@ const ManageUsers = () => {
   );
 };
 
-export default ManageUsers;
+export default SuperAdminUsers;

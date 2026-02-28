@@ -1,4 +1,4 @@
-import { User, Settings, LogOut, Trash2, Shield } from 'lucide-react';
+import { User, Settings, LogOut, Trash2, Shield, Crown } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export function ProfileDropdown() {
-  const { user, logout, deleteAccount, isAdmin } = useAuth();
+  const { user, logout, deleteAccount, isAdmin, isSuperAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -53,7 +53,18 @@ export function ProfileDropdown() {
             <span>Settings</span>
           </Link>
         </DropdownMenuItem>
-        {isAdmin && (
+        {isSuperAdmin && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link to="/superadmin" className="flex items-center">
+                <Crown className="mr-2 h-4 w-4" />
+                <span>Super Admin</span>
+              </Link>
+            </DropdownMenuItem>
+          </>
+        )}
+        {isAdmin && !isSuperAdmin && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild className="cursor-pointer">

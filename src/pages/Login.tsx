@@ -110,6 +110,7 @@ const Login = () => {
           <div className="mt-6 pt-6 border-t border-border">
             <div className="text-xs text-muted-foreground text-center space-y-1">
               <p className="font-semibold mb-2">Demo Accounts:</p>
+              <p>Super Admin: superadmin@luxedrive.com / super123</p>
               <p>Admin: admin@luxedrive.com / admin123</p>
               <p>User: user@luxedrive.com / user123</p>
             </div>

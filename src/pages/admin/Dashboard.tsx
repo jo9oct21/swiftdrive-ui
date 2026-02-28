@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Car, Users, BookOpen, DollarSign, TrendingUp, Calendar, Home, AlertTriangle } from 'lucide-react';
+import { Car, Users, BookOpen, DollarSign, TrendingUp, Calendar, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import AnimatedCounter from '@/components/AnimatedCounter';
@@ -57,11 +57,6 @@ const Dashboard = () => {
           <h1 className="text-4xl font-bold text-gradient mb-2">Dashboard</h1>
           <p className="text-muted-foreground">Welcome back, Admin</p>
         </div>
-        <Link to="/">
-          <Button variant="outline" size="sm" className="gap-2">
-            <Home className="w-4 h-4" /> Back to Home
-          </Button>
-        </Link>
       </div>
 
       {/* Stats Cards */}
