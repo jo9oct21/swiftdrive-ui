@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, MapPin, Car, DollarSign, Clock } from 'lucide-react';
+import { Calendar, MapPin, Car, DollarSign, Clock, AlertTriangle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,14 +10,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from 'next-themes';
+import { useNotifications } from '@/contexts/NotificationContext';
 import bookingBg from '@/assets/car-sedan.jpg';
 import { BookingDetailsDialog } from '@/components/BookingDetailsDialog';
+import { cars } from '@/data/cars';
 
 const initialBookings = [
-  { id: 1, car: 'Tesla Model 3', carImage: '/placeholder.svg', pickupDate: '2025-10-22', returnDate: '2025-10-25', location: 'New York, NY', total: 267, status: 'upcoming' },
-  { id: 2, car: 'BMW X5', carImage: '/placeholder.svg', pickupDate: '2025-10-23', returnDate: '2025-10-27', location: 'Los Angeles, CA', total: 500, status: 'upcoming' },
-  { id: 3, car: 'Porsche 911', carImage: '/placeholder.svg', pickupDate: '2025-10-15', returnDate: '2025-10-18', location: 'Miami, FL', total: 598, status: 'completed' },
-  { id: 4, car: 'Mercedes C-Class', carImage: '/placeholder.svg', pickupDate: '2025-10-28', returnDate: '2025-10-30', location: 'Chicago, IL', total: 380, status: 'cancelled' },
+  { id: 1, car: 'Tesla Model 3', carId: '1', pickupDate: '2026-03-10', returnDate: '2026-03-15', location: 'Addis Ababa - Bole', baseCost: 445, penaltyAmount: 0, penaltyPaid: false, status: 'upcoming', carTaken: false },
+  { id: 2, car: 'BMW X5', carId: '2', pickupDate: '2026-02-20', returnDate: '2026-02-25', location: 'Hawassa - Main Branch', baseCost: 625, penaltyAmount: 0, penaltyPaid: false, status: 'upcoming', carTaken: true },
+  { id: 3, car: 'Porsche 911', carId: '3', pickupDate: '2026-01-10', returnDate: '2026-01-13', location: 'Bahir Dar - City Center', baseCost: 897, penaltyAmount: 100, penaltyPaid: false, status: 'completed', carTaken: true },
+  { id: 4, car: 'Mercedes C-Class', carId: '4', pickupDate: '2026-02-01', returnDate: '2026-02-05', location: 'Dire Dawa - Airport', baseCost: 380, penaltyAmount: 0, penaltyPaid: false, status: 'cancelled', carTaken: false },
 ];
 
 const MyBookings = () => {
@@ -31,6 +33,7 @@ const MyBookings = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { theme } = useTheme();
+  const { addNotification } = useNotifications();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -39,7 +42,37 @@ const MyBookings = () => {
     }
   }, [isAuthenticated, navigate, toast]);
 
+  // Auto-cancel logic: if return date passed and car not taken, auto-cancel
+  useEffect(() => {
+    const now = new Date();
+    setBookings(prev => prev.map(b => {
+      if (b.status === 'upcoming' && !b.carTaken && new Date(b.returnDate) < now) {
+        addNotification({
+          title: 'Booking Auto-Cancelled',
+          message: `Your booking for ${b.car} was automatically cancelled because the return date passed without pickup.`,
+          type: 'warning',
+        });
+        return { ...b, status: 'cancelled' };
+      }
+      // If car taken but not returned past return date, add daily penalty
+      if (b.status === 'upcoming' && b.carTaken && new Date(b.returnDate) < now) {
+        const daysLate = Math.ceil((now.getTime() - new Date(b.returnDate).getTime()) / 86400000);
+        const penaltyPerDay = 50;
+        const totalPenalty = daysLate * penaltyPerDay;
+        if (totalPenalty !== b.penaltyAmount) {
+          return { ...b, penaltyAmount: totalPenalty };
+        }
+      }
+      return b;
+    }));
+  }, []);
+
   if (!isAuthenticated) return null;
+
+  const getCarImage = (carId: string) => {
+    const carData = cars.find(c => c.id === carId);
+    return carData?.image || bookingBg;
+  };
 
   const handleCancelBooking = (booking: typeof initialBookings[0]) => {
     setBookingToCancel(booking);
@@ -49,6 +82,11 @@ const MyBookings = () => {
   const confirmCancel = () => {
     if (bookingToCancel) {
       setBookings(prev => prev.map(b => b.id === bookingToCancel.id ? { ...b, status: 'cancelled' } : b));
+      addNotification({
+        title: 'Booking Cancelled',
+        message: `Your booking for ${bookingToCancel.car} has been cancelled.`,
+        type: 'warning',
+      });
       toast({ title: 'Booking Cancelled', description: `Your booking for ${bookingToCancel.car} has been cancelled.` });
       setCancelDialogOpen(false);
       setBookingToCancel(null);
@@ -56,15 +94,28 @@ const MyBookings = () => {
   };
 
   const handleBookAgain = (booking: typeof initialBookings[0]) => {
-    const newBooking = {
-      ...booking,
-      id: Date.now(),
-      status: 'upcoming',
-      pickupDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
-      returnDate: new Date(Date.now() + 10 * 86400000).toISOString().split('T')[0],
-    };
-    setBookings(prev => [newBooking, ...prev]);
-    toast({ title: 'Booked Again!', description: `${booking.car} has been rebooked successfully.` });
+    const carData = cars.find(c => c.id === booking.carId);
+    if (carData) {
+      navigate('/booking', { state: { car: carData } });
+    } else {
+      navigate('/cars');
+    }
+  };
+
+  const handlePayPenalty = (booking: typeof initialBookings[0]) => {
+    toast({
+      title: 'Redirecting to Chapa Payment 💳',
+      description: `Processing penalty payment of $${booking.penaltyAmount} for ${booking.car}...`,
+    });
+    setTimeout(() => {
+      setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, penaltyPaid: true } : b));
+      addNotification({
+        title: 'Penalty Paid',
+        message: `Your penalty of $${booking.penaltyAmount} for ${booking.car} has been paid successfully.`,
+        type: 'success',
+      });
+      toast({ title: 'Penalty Paid! ✅', description: `$${booking.penaltyAmount} penalty for ${booking.car} has been paid.` });
+    }, 2000);
   };
 
   const getStatusColor = (status: string) => {
@@ -87,7 +138,7 @@ const MyBookings = () => {
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row gap-6">
             <div className="w-full md:w-48 h-32 rounded-lg overflow-hidden bg-secondary">
-              <img src={booking.carImage} alt={booking.car} className="w-full h-full object-cover" />
+              <img src={getCarImage(booking.carId)} alt={booking.car} className="w-full h-full object-cover" />
             </div>
             <div className="flex-1 space-y-4">
               <div className="flex items-start justify-between">
@@ -98,8 +149,18 @@ const MyBookings = () => {
                   </Badge>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Total</p>
-                  <p className="text-2xl font-bold text-gold">${booking.total}</p>
+                  {booking.penaltyAmount > 0 ? (
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">Base: <span className="font-medium">${booking.baseCost}</span></p>
+                      <p className="text-sm text-destructive">Penalty: <span className="font-bold">+${booking.penaltyAmount}</span></p>
+                      <p className="text-xl font-bold text-gold">${booking.baseCost + booking.penaltyAmount}</p>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm text-muted-foreground">Total</p>
+                      <p className="text-2xl font-bold text-gold">${booking.baseCost}</p>
+                    </>
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -116,22 +177,31 @@ const MyBookings = () => {
                   <div><p className="text-muted-foreground">Location</p><p className="font-medium">{booking.location}</p></div>
                 </div>
               </div>
-              <div className="flex gap-2 pt-2">
+              <div className="flex flex-wrap gap-2 pt-2">
                 <Button variant="default" size="sm" className="bg-gradient-gold hover:shadow-glow text-foreground"
                   onClick={() => { setSelectedBooking(booking); setDialogOpen(true); }}>
                   View Details
                 </Button>
                 {booking.status === 'upcoming' && (
-                  <Button variant="outline" size="sm" className="text-red-500 hover:text-red-600 hover:border-red-500"
+                  <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive"
                     onClick={() => handleCancelBooking(booking)}>
                     Cancel Booking
                   </Button>
                 )}
                 {(booking.status === 'completed' || booking.status === 'cancelled') && (
-                  <Button variant="outline" size="sm" className="border-green-500 text-green-500 hover:bg-green-500 hover:text-white"
+                  <Button variant="outline" size="sm" className="border-green-500 text-green-500 hover:text-green-400"
                     onClick={() => handleBookAgain(booking)}>
                     Book Again
                   </Button>
+                )}
+                {booking.penaltyAmount > 0 && !booking.penaltyPaid && (
+                  <Button variant="destructive" size="sm" className="flex items-center gap-1"
+                    onClick={() => handlePayPenalty(booking)}>
+                    <AlertTriangle className="w-3 h-3" /> Pay Penalty (${booking.penaltyAmount})
+                  </Button>
+                )}
+                {booking.penaltyPaid && (
+                  <Badge className="bg-green-500/20 text-green-500">Penalty Paid ✅</Badge>
                 )}
               </div>
             </div>
@@ -187,7 +257,6 @@ const MyBookings = () => {
 
         <BookingDetailsDialog booking={selectedBooking} open={dialogOpen} onOpenChange={setDialogOpen} />
 
-        {/* Cancel Confirmation Dialog */}
         <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
           <DialogContent className="glass-card">
             <DialogHeader>

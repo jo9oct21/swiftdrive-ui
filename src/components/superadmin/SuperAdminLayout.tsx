@@ -1,37 +1,27 @@
 import { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Shield, LogOut, Menu, X, Crown, Clock } from 'lucide-react';
+import { LayoutDashboard, Users, Shield, Home, Menu, X, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
 const navItems = [
   { name: 'Dashboard', path: '/superadmin', icon: LayoutDashboard },
   { name: 'Users', path: '/superadmin/users', icon: Users },
   { name: 'Admins', path: '/superadmin/admins', icon: Shield },
-  { name: 'History', path: '/superadmin/history', icon: Clock },
 ];
 
 const SuperAdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const { user, logout, isSuperAdmin } = useAuth();
+  const { user, isSuperAdmin } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!isSuperAdmin) {
-      toast({ title: 'Access denied', description: 'You need super admin privileges', variant: 'destructive' });
       navigate('/');
     }
-  }, [isSuperAdmin, navigate, toast]);
-
-  const handleLogout = () => {
-    logout();
-    toast({ title: 'Logged out', description: 'See you soon!' });
-    navigate('/');
-  };
+  }, [isSuperAdmin, navigate]);
 
   if (!isSuperAdmin) return null;
 
@@ -71,8 +61,8 @@ const SuperAdminLayout = () => {
           </nav>
           <div className="mt-6 space-y-4 pt-4 border-t border-border">
             <ThemeToggle />
-            <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
-              <LogOut className="w-5 h-5 mr-3" /> Logout
+            <Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/')}>
+              <Home className="w-5 h-5 mr-3" /> Back to Home
             </Button>
           </div>
         </div>
@@ -107,8 +97,8 @@ const SuperAdminLayout = () => {
             </nav>
             <div className="space-y-4 pt-4 border-t border-border">
               <ThemeToggle />
-              <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
-                <LogOut className="w-5 h-5 mr-3" /> Logout
+              <Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/')}>
+                <Home className="w-5 h-5 mr-3" /> Back to Home
               </Button>
             </div>
           </div>

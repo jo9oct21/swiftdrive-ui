@@ -37,7 +37,6 @@ import SuperAdminLayout from "./components/superadmin/SuperAdminLayout";
 import SuperAdminDashboard from "./pages/superadmin/SuperAdminDashboard";
 import SuperAdminUsers from "./pages/superadmin/SuperAdminUsers";
 import SuperAdminAdmins from "./pages/superadmin/SuperAdminAdmins";
-import SuperAdminHistory from "./pages/superadmin/SuperAdminHistory";
 
 const queryClient = new QueryClient();
 
@@ -65,7 +64,6 @@ const App = () => (
                 <Route index element={<SuperAdminDashboard />} />
                 <Route path="users" element={<SuperAdminUsers />} />
                 <Route path="admins" element={<SuperAdminAdmins />} />
-                <Route path="history" element={<SuperAdminHistory />} />
               </Route>
 
               <Route path="/*" element={

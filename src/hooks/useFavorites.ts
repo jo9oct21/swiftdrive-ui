@@ -1,22 +1,38 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useSyncExternalStore } from 'react';
+
+// Shared state for favorites across all hook instances
+let listeners: Array<() => void> = [];
+let favoritesSnapshot: string[] = JSON.parse(localStorage.getItem('favorites') || '[]');
+
+function subscribe(listener: () => void) {
+  listeners = [...listeners, listener];
+  return () => {
+    listeners = listeners.filter(l => l !== listener);
+  };
+}
+
+function getSnapshot() {
+  return favoritesSnapshot;
+}
+
+function setFavorites(newFavorites: string[]) {
+  favoritesSnapshot = newFavorites;
+  localStorage.setItem('favorites', JSON.stringify(newFavorites));
+  listeners.forEach(l => l());
+}
 
 export const useFavorites = () => {
-  const [favorites, setFavorites] = useState<string[]>(() => {
-    const stored = localStorage.getItem('favorites');
-    return stored ? JSON.parse(stored) : [];
-  });
+  const favorites = useSyncExternalStore(subscribe, getSnapshot);
 
-  const toggleFavorite = (carId: string) => {
-    setFavorites((prev) => {
-      const newFavorites = prev.includes(carId)
-        ? prev.filter((id) => id !== carId)
-        : [...prev, carId];
-      localStorage.setItem('favorites', JSON.stringify(newFavorites));
-      return newFavorites;
-    });
-  };
+  const toggleFavorite = useCallback((carId: string) => {
+    const current = getSnapshot();
+    const newFavorites = current.includes(carId)
+      ? current.filter((id) => id !== carId)
+      : [...current, carId];
+    setFavorites(newFavorites);
+  }, []);
 
-  const isFavorite = (carId: string) => favorites.includes(carId);
+  const isFavorite = useCallback((carId: string) => favorites.includes(carId), [favorites]);
 
   return { favorites, toggleFavorite, isFavorite };
 };

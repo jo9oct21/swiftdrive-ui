@@ -84,32 +84,28 @@ const Navbar = () => {
             {isAuthenticated && (
               <>
                 {favoritesEnabled && (
-                  <Link to="/favorites" className="relative">
-                    <Button variant="ghost" size="icon" className="hover-glow hover:text-gold">
-                      <Heart className={`h-5 w-5 transition-colors ${
-                        theme === 'light' ? 'text-foreground hover:text-gold' : 'text-white hover:text-gold'
-                      }`} />
-                      {favorites.length > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
-                          {favorites.length}
-                        </span>
-                      )}
-                    </Button>
+                  <Link to="/favorites" className="relative group">
+                    <Heart className={`h-5 w-5 transition-all duration-300 group-hover:text-gold group-hover:scale-110 ${
+                      theme === 'light' ? 'text-foreground' : 'text-white'
+                    }`} />
+                    {favorites.length > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                        {favorites.length}
+                      </span>
+                    )}
                   </Link>
                 )}
 
                 {notificationsEnabled && (
-                  <Link to="/notifications" className="relative">
-                    <Button variant="ghost" size="icon" className="hover-glow hover:text-gold">
-                      <Bell className={`h-5 w-5 transition-colors ${
-                        theme === 'light' ? 'text-foreground hover:text-gold' : 'text-white hover:text-gold'
-                      }`} />
-                      {unreadCount > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
-                          {unreadCount}
-                        </span>
-                      )}
-                    </Button>
+                  <Link to="/notifications" className="relative group">
+                    <Bell className={`h-5 w-5 transition-all duration-300 group-hover:text-gold group-hover:scale-110 ${
+                      theme === 'light' ? 'text-foreground' : 'text-white'
+                    }`} />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                        {unreadCount}
+                      </span>
+                    )}
                   </Link>
                 )}
               </>
@@ -151,7 +147,7 @@ const Navbar = () => {
                 {links.map((link) => (
                   <Link key={link.path} to={link.path}
                     className={`block py-2 px-4 rounded-lg transition-all duration-300 ${
-                      location.pathname === link.path ? 'glass-card text-gold' : 'text-foreground hover:bg-accent/10'
+                      location.pathname === link.path ? 'glass-card text-gold' : 'text-foreground hover:text-gold'
                     }`}
                     onClick={() => setIsOpen(false)}>
                     {link.label}
@@ -160,13 +156,13 @@ const Navbar = () => {
                 {isAuthenticated && (
                   <>
                     {favoritesEnabled && (
-                      <Link to="/favorites" className="flex items-center gap-2 py-2 px-4 rounded-lg transition-all duration-300 text-foreground hover:bg-accent/10" onClick={() => setIsOpen(false)}>
+                      <Link to="/favorites" className="flex items-center gap-2 py-2 px-4 rounded-lg transition-all duration-300 text-foreground hover:text-gold" onClick={() => setIsOpen(false)}>
                         <Heart className="w-4 h-4" /> Favorites
                         {favorites.length > 0 && <span className="ml-auto bg-destructive text-destructive-foreground text-xs px-2 py-0.5 rounded-full font-bold">{favorites.length}</span>}
                       </Link>
                     )}
                     {notificationsEnabled && (
-                      <Link to="/notifications" className="flex items-center gap-2 py-2 px-4 rounded-lg transition-all duration-300 text-foreground hover:bg-accent/10" onClick={() => setIsOpen(false)}>
+                      <Link to="/notifications" className="flex items-center gap-2 py-2 px-4 rounded-lg transition-all duration-300 text-foreground hover:text-gold" onClick={() => setIsOpen(false)}>
                         <Bell className="w-4 h-4" /> Notifications
                         {unreadCount > 0 && <span className="ml-auto bg-destructive text-destructive-foreground text-xs px-2 py-0.5 rounded-full font-bold">{unreadCount}</span>}
                       </Link>
