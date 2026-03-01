@@ -6,14 +6,34 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNotifications } from '@/contexts/NotificationContext';
+
+const BRANCH_LOCATIONS = [
+  'Addis Ababa - Bole',
+  'Addis Ababa - Megenagna',
+  'Addis Ababa - Piassa',
+  'Hawassa - Main Branch',
+  'Bahir Dar - City Center',
+  'Dire Dawa - Airport',
+  'Adama - Downtown',
+  'Mekelle - Main Branch',
+];
+
+// Simulated booked dates for demo
+const BOOKED_DATES = [
+  '2026-03-05', '2026-03-06', '2026-03-10', '2026-03-11', '2026-03-12',
+  '2026-03-20', '2026-03-21',
+];
 
 const Booking = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isAuthenticated, user } = useAuth();
+  const { addNotification } = useNotifications();
   const car = location.state?.car;
 
   const [phoneDialogOpen, setPhoneDialogOpen] = useState(false);
@@ -33,6 +53,9 @@ const Booking = () => {
     returnLocation: '',
   });
 
+  const today = new Date().toISOString().split('T')[0];
+  const maxDate = new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0]; // 90 days ahead
+
   const calculateDays = () => {
     if (!formData.pickupDate || !formData.returnDate) return 0;
     const pickup = new Date(formData.pickupDate);
@@ -44,6 +67,17 @@ const Booking = () => {
   const totalDays = calculateDays();
   const totalPrice = car ? totalDays * car.pricePerDay : 0;
 
+  const isDateBooked = (dateStr: string) => BOOKED_DATES.includes(dateStr);
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    if (isDateBooked(value)) {
+      toast({ title: 'Date Unavailable', description: 'This date is already booked. Please choose another.', variant: 'destructive' });
+      return;
+    }
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!car) {
@@ -51,7 +85,6 @@ const Booking = () => {
       return;
     }
 
-    // Check if phone number is set
     const storedPhone = localStorage.getItem('user_phone');
     if (!storedPhone) {
       setPhoneDialogOpen(true);
@@ -66,7 +99,13 @@ const Booking = () => {
       title: 'Redirecting to Chapa Payment 💳',
       description: `Processing payment of $${totalPrice} for ${car.name}...`,
     });
-    // This is where Chapa payment integration would go
+
+    addNotification({
+      title: 'Booking Confirmed',
+      message: `Your ${car.name} has been booked for ${totalDays} days ($${totalPrice}). Pickup: ${formData.pickupDate} at ${formData.pickupLocation}.`,
+      type: 'success',
+    });
+
     setTimeout(() => {
       toast({ title: 'Booking Confirmed! 🎉', description: `Your ${car.name} has been booked for ${totalDays} days.` });
       navigate('/my-bookings');
@@ -81,10 +120,6 @@ const Booking = () => {
     localStorage.setItem('user_phone', phoneNumber);
     setPhoneDialogOpen(false);
     proceedToPayment();
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   if (!car) {
@@ -111,7 +146,6 @@ const Booking = () => {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Rental Details */}
                   <div className="space-y-4">
                     <h3 className="font-semibold text-lg">Rental Details</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -119,25 +153,44 @@ const Booking = () => {
                         <Label htmlFor="pickupDate" className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-primary" /> Pickup Date *
                         </Label>
-                        <Input id="pickupDate" name="pickupDate" type="date" required value={formData.pickupDate} onChange={handleChange} />
+                        <Input id="pickupDate" name="pickupDate" type="date" required
+                          value={formData.pickupDate} onChange={handleDateChange}
+                          min={today} max={maxDate} />
+                        <p className="text-xs text-muted-foreground">Min: today, Max: 90 days ahead</p>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="returnDate" className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-primary" /> Return Date *
                         </Label>
-                        <Input id="returnDate" name="returnDate" type="date" required value={formData.returnDate} onChange={handleChange} />
+                        <Input id="returnDate" name="returnDate" type="date" required
+                          value={formData.returnDate} onChange={handleDateChange}
+                          min={formData.pickupDate || today} max={maxDate} />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="pickupLocation" className="flex items-center gap-2">
                           <MapPin className="h-4 w-4 text-primary" /> Pickup Location *
                         </Label>
-                        <Input id="pickupLocation" name="pickupLocation" required value={formData.pickupLocation} onChange={handleChange} placeholder="City, State" />
+                        <Select value={formData.pickupLocation} onValueChange={(v) => setFormData(prev => ({ ...prev, pickupLocation: v }))}>
+                          <SelectTrigger><SelectValue placeholder="Select branch" /></SelectTrigger>
+                          <SelectContent>
+                            {BRANCH_LOCATIONS.map(loc => (
+                              <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="returnLocation" className="flex items-center gap-2">
                           <MapPin className="h-4 w-4 text-primary" /> Return Location *
                         </Label>
-                        <Input id="returnLocation" name="returnLocation" required value={formData.returnLocation} onChange={handleChange} placeholder="City, State" />
+                        <Select value={formData.returnLocation} onValueChange={(v) => setFormData(prev => ({ ...prev, returnLocation: v }))}>
+                          <SelectTrigger><SelectValue placeholder="Select branch" /></SelectTrigger>
+                          <SelectContent>
+                            {BRANCH_LOCATIONS.map(loc => (
+                              <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   </div>
@@ -152,11 +205,12 @@ const Booking = () => {
                         <div className="bg-green-500 text-white font-bold text-lg px-3 py-1 rounded-lg">Chapa</div>
                         <span className="text-sm font-medium">Secure Payment Gateway</span>
                       </div>
-                      <p className="text-sm text-muted-foreground">Your payment will be processed securely through Chapa. You'll be redirected to complete payment after confirming.</p>
+                      <p className="text-sm text-muted-foreground">Your payment will be processed securely through Chapa.</p>
                     </div>
                   </div>
 
-                  <Button type="submit" size="lg" className="w-full bg-gradient-gold hover:shadow-glow text-foreground font-semibold">
+                  <Button type="submit" size="lg" className="w-full bg-gradient-gold hover:shadow-glow text-foreground font-semibold"
+                    disabled={!formData.pickupLocation || !formData.returnLocation}>
                     Confirm Booking — ${totalPrice}
                   </Button>
                 </form>
@@ -210,13 +264,7 @@ const Booking = () => {
             <p className="text-sm text-muted-foreground">Please enter your phone number to proceed with the booking.</p>
             <div className="space-y-2">
               <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="+251 9XX XXX XXXX"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-              />
+              <Input id="phone" type="tel" placeholder="+251 9XX XXX XXXX" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
             </div>
           </div>
           <DialogFooter>

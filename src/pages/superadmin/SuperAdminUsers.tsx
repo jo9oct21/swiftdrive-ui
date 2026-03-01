@@ -46,13 +46,12 @@ const SuperAdminUsers = () => {
     if (!selectedUserId) return;
 
     if (dialogAction === 'suspend') {
-      setUserList(prev => prev.map(u =>
-        u.id === selectedUserId
-          ? { ...u, status: u.status === 'Suspended' ? 'Active' : 'Suspended' }
-          : u
-      ));
       const user = userList.find(u => u.id === selectedUserId);
-      toast({ title: 'Success', description: `User ${user?.status === 'Suspended' ? 'unsuspended' : 'suspended'} successfully` });
+      const newStatus = user?.status === 'Suspended' ? 'Active' : 'Suspended';
+      setUserList(prev => prev.map(u =>
+        u.id === selectedUserId ? { ...u, status: newStatus } : u
+      ));
+      toast({ title: 'Success', description: `User ${newStatus === 'Suspended' ? 'suspended' : 'unsuspended'} successfully` });
     } else {
       setUserList(prev => prev.map(u =>
         u.id === selectedUserId ? { ...u, role: 'Admin' } : u

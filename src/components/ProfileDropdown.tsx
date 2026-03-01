@@ -1,4 +1,4 @@
-import { User, Settings, LogOut, Trash2, Shield, Crown } from 'lucide-react';
+import { User, Settings, LogOut, Shield, Crown } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -6,24 +6,15 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 
 export function ProfileDropdown() {
-  const { user, logout, deleteAccount, isAdmin, isSuperAdmin } = useAuth();
+  const { user, logout, isAdmin, isSuperAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleLogout = () => {
     logout();
     toast({ title: 'Logged out', description: 'See you soon!' });
-    navigate('/');
-  };
-
-  const handleDeleteAccount = () => {
-    deleteAccount();
-    toast({ title: 'Account Deleted', description: 'Your account has been permanently deleted.', variant: 'destructive' });
     navigate('/');
   };
 
@@ -62,6 +53,12 @@ export function ProfileDropdown() {
                 <span>Super Admin</span>
               </Link>
             </DropdownMenuItem>
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link to="/admin" className="flex items-center">
+                <Shield className="mr-2 h-4 w-4" />
+                <span>Admin Dashboard</span>
+              </Link>
+            </DropdownMenuItem>
           </>
         )}
         {isAdmin && !isSuperAdmin && (
@@ -80,28 +77,6 @@ export function ProfileDropdown() {
           <LogOut className="mr-2 h-4 w-4" />
           <span>Logout</span>
         </DropdownMenuItem>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="cursor-pointer text-red-500 focus:text-red-600">
-              <Trash2 className="mr-2 h-4 w-4" />
-              <span>Delete Account</span>
-            </DropdownMenuItem>
-          </AlertDialogTrigger>
-          <AlertDialogContent className="glass-card">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Account</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete your account and remove all your data.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                Delete Account
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </DropdownMenuContent>
     </DropdownMenu>
   );

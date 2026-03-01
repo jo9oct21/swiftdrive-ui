@@ -4,6 +4,18 @@ import { Search, MapPin, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+const BRANCH_LOCATIONS = [
+  'Addis Ababa - Bole',
+  'Addis Ababa - Megenagna',
+  'Addis Ababa - Piassa',
+  'Hawassa - Main Branch',
+  'Bahir Dar - City Center',
+  'Dire Dawa - Airport',
+  'Adama - Downtown',
+  'Mekelle - Main Branch',
+];
 
 interface SearchBarProps {
   onSearch?: (filters: {
@@ -19,11 +31,12 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
   const [pickupDate, setPickupDate] = useState('');
   const [returnDate, setReturnDate] = useState('');
 
+  const today = new Date().toISOString().split('T')[0];
+
   const handleSearch = () => {
     if (onSearch) {
       onSearch({ location, pickupDate, returnDate });
     } else {
-      // Navigate to cars page with search params
       const params = new URLSearchParams();
       if (location) params.set('location', location);
       if (pickupDate) params.set('pickupDate', pickupDate);
@@ -40,13 +53,16 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
             <MapPin className="h-4 w-4 text-primary" />
             Location
           </Label>
-          <Input
-            id="location"
-            placeholder="Enter location"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            className="w-full"
-          />
+          <Select value={location} onValueChange={setLocation}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select branch" />
+            </SelectTrigger>
+            <SelectContent>
+              {BRANCH_LOCATIONS.map(loc => (
+                <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-2">
@@ -59,6 +75,7 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
             type="date"
             value={pickupDate}
             onChange={(e) => setPickupDate(e.target.value)}
+            min={today}
             className="w-full"
           />
         </div>
@@ -73,12 +90,13 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
             type="date"
             value={returnDate}
             onChange={(e) => setReturnDate(e.target.value)}
+            min={pickupDate || today}
             className="w-full"
           />
         </div>
 
         <div className="flex items-end">
-          <Button onClick={handleSearch} className="w-full">
+          <Button onClick={handleSearch} className="w-full bg-gradient-gold hover:shadow-glow text-foreground font-semibold">
             <Search className="h-4 w-4 mr-2" />
             Search
           </Button>

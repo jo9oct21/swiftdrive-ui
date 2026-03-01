@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Phone, MapPin, Calendar, Lock, Eye, EyeOff, Shield, Smartphone, Clock, Bell, Heart } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Calendar, Lock, Eye, EyeOff, Shield, Smartphone, Clock, Bell, Heart, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,9 +13,13 @@ import { useNotifications } from '@/contexts/NotificationContext';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 const Settings = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, deleteAccount } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -43,6 +47,12 @@ const Settings = () => {
     }
     toast({ title: 'Password Changed', description: 'Your password has been updated successfully.' });
     setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  };
+
+  const handleDeleteAccount = () => {
+    deleteAccount();
+    toast({ title: 'Account Deleted', description: 'Your account has been permanently deleted.', variant: 'destructive' });
+    navigate('/');
   };
 
   const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase();
@@ -119,6 +129,31 @@ const Settings = () => {
                     <div className="flex gap-4 pt-4">
                       <Button type="submit" className="flex-1 bg-gradient-gold hover:shadow-glow text-foreground font-semibold">Save Changes</Button>
                       <Button type="button" variant="outline" onClick={() => navigate(-1)}>Cancel</Button>
+                    </div>
+
+                    {/* Delete Account */}
+                    <div className="pt-6 border-t border-border">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" className="w-full">
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete Account
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="glass-card">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Account</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete your account and remove all your data.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                              Delete Account
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </form>
                 </TabsContent>

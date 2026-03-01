@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Car, Users, BookOpen, LogOut, Menu, X, Shield, Clock } from 'lucide-react';
+import { LayoutDashboard, Car, Users, BookOpen, Home, Menu, X, Shield, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
 const navItems = [
@@ -17,34 +16,19 @@ const navItems = [
 const AdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const { user, logout, isAdmin, isSuperAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!isAdmin) {
-      toast({ 
-        title: 'Access denied', 
-        description: 'You need admin privileges to access this page',
-        variant: 'destructive' 
-      });
       navigate('/');
     }
-  }, [isAdmin, navigate, toast]);
+  }, [isAdmin, navigate]);
 
-  const handleLogout = () => {
-    logout();
-    toast({ title: 'Logged out', description: 'See you soon!' });
-    navigate('/');
-  };
-
-  if (!isAdmin) {
-    return null;
-  }
+  if (!isAdmin) return null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-card/95 backdrop-blur-xl border-b border-border z-50 flex items-center justify-between px-4">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-gradient-gold flex items-center justify-center">
@@ -60,7 +44,6 @@ const AdminLayout = () => {
         </Button>
       </div>
 
-      {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="lg:hidden fixed top-16 left-0 right-0 bottom-0 bg-card/95 backdrop-blur-xl z-40 p-4">
           <nav className="space-y-2">
@@ -80,16 +63,15 @@ const AdminLayout = () => {
           </nav>
           <div className="mt-6 space-y-4 pt-4 border-t border-border">
             <ThemeToggle />
-            <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
-              <LogOut className="w-5 h-5 mr-3" />
-              Logout
+            <Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/')}>
+              <Home className="w-5 h-5 mr-3" />
+              Back to Home
             </Button>
           </div>
         </div>
       )}
 
       <div className="flex">
-        {/* Desktop Sidebar */}
         <aside className="hidden lg:block fixed left-0 top-0 h-screen w-64 bg-card/50 backdrop-blur-xl border-r border-border">
           <div className="p-6 border-b border-border flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gradient-gold flex items-center justify-center">
@@ -118,15 +100,14 @@ const AdminLayout = () => {
             </nav>
             <div className="space-y-4 pt-4 border-t border-border">
               <ThemeToggle />
-              <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
-                <LogOut className="w-5 h-5 mr-3" />
-                Logout
+              <Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/')}>
+                <Home className="w-5 h-5 mr-3" />
+                Back to Home
               </Button>
             </div>
           </div>
         </aside>
 
-        {/* Main Content */}
         <main className="flex-1 lg:ml-64 pt-16 lg:pt-0 p-4 lg:p-8 overflow-x-hidden">
           <Outlet />
         </main>

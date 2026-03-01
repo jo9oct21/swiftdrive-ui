@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, MoreHorizontal, Ban, Shield, User } from 'lucide-react';
+import { Search, MoreHorizontal, Ban, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -16,9 +17,9 @@ import {
 } from '@/components/ui/table';
 
 const demoAdmins = [
-  { id: 1, name: 'Admin User', email: 'admin@luxedrive.com', role: 'Admin', status: 'Active', bookings: 0 },
-  { id: 2, name: 'Jane Admin', email: 'jane.admin@luxedrive.com', role: 'Admin', status: 'Active', bookings: 0 },
-  { id: 3, name: 'Tom Manager', email: 'tom@luxedrive.com', role: 'Admin', status: 'Active', bookings: 0 },
+  { id: 1, name: 'Admin User', email: 'admin@luxedrive.com', role: 'Admin', status: 'Active' },
+  { id: 2, name: 'Jane Admin', email: 'jane.admin@luxedrive.com', role: 'Admin', status: 'Active' },
+  { id: 3, name: 'Tom Manager', email: 'tom@luxedrive.com', role: 'Admin', status: 'Active' },
 ];
 
 const SuperAdminAdmins = () => {
@@ -45,18 +46,17 @@ const SuperAdminAdmins = () => {
     if (!selectedAdminId) return;
 
     if (dialogAction === 'suspend') {
-      setAdminList(prev => prev.map(a =>
-        a.id === selectedAdminId
-          ? { ...a, status: a.status === 'Suspended' ? 'Active' : 'Suspended' }
-          : a
-      ));
       const admin = adminList.find(a => a.id === selectedAdminId);
-      toast({ title: 'Success', description: `Admin ${admin?.status === 'Suspended' ? 'unsuspended' : 'suspended'} successfully` });
+      const newStatus = admin?.status === 'Suspended' ? 'Active' : 'Suspended';
+      setAdminList(prev => prev.map(a =>
+        a.id === selectedAdminId ? { ...a, status: newStatus } : a
+      ));
+      toast({ title: 'Success', description: `Admin ${newStatus === 'Suspended' ? 'suspended' : 'unsuspended'} successfully` });
     } else {
       setAdminList(prev => prev.map(a =>
         a.id === selectedAdminId ? { ...a, role: 'User' } : a
       ));
-      toast({ title: 'Success', description: 'Admin demoted to User' });
+      toast({ title: 'Success', description: 'Admin returned to User role' });
     }
 
     setDialogOpen(false);
@@ -119,7 +119,7 @@ const SuperAdminAdmins = () => {
                         {admin.status === 'Suspended' ? 'Unsuspend' : 'Suspend'}
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleAction(admin.id, 'demote')}>
-                        <User className="w-4 h-4 mr-2" /> Make User
+                        <User className="w-4 h-4 mr-2" /> Return to User
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -136,14 +136,14 @@ const SuperAdminAdmins = () => {
             <AlertDialogTitle>
               {dialogAction === 'suspend'
                 ? (selectedAdmin?.status === 'Suspended' ? 'Unsuspend Admin?' : 'Suspend Admin?')
-                : 'Demote to User?'}
+                : 'Return to User?'}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {dialogAction === 'suspend'
                 ? (selectedAdmin?.status === 'Suspended'
                     ? 'This will restore the admin\'s access.'
                     : 'This will temporarily block the admin from accessing their account.')
-                : 'This will remove admin privileges and demote to regular user.'}
+                : 'This will remove admin privileges and return them to a regular user.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
