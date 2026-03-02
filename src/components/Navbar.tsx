@@ -170,10 +170,10 @@ const Navbar = () => {
                   </>
                 )}
                 <div className="px-4 space-y-2">
-                  {isAuthenticated ? (
-                    <Link to="/profile" onClick={() => setIsOpen(false)}>
+                {isAuthenticated ? (
+                    <Link to="/settings" onClick={() => setIsOpen(false)}>
                       <Button variant="ghost" className="w-full justify-start" size="sm">
-                        <User className="w-4 h-4 mr-2" /> Profile
+                        <User className="w-4 h-4 mr-2" /> Settings
                       </Button>
                     </Link>
                   ) : (
