@@ -22,10 +22,10 @@ const BRANCH_LOCATIONS = [
   'Mekelle - Main Branch',
 ];
 
-// Simulated booked dates for demo
-const BOOKED_DATES = [
-  '2026-03-05', '2026-03-06', '2026-03-10', '2026-03-11', '2026-03-12',
-  '2026-03-20', '2026-03-21',
+// Simulated booked date ranges for demo (existing rentals for this car)
+const BOOKED_RANGES = [
+  { start: '2026-03-20', end: '2026-03-25' },
+  { start: '2026-04-05', end: '2026-04-10' },
 ];
 
 const Booking = () => {
@@ -35,6 +35,7 @@ const Booking = () => {
   const { isAuthenticated, user } = useAuth();
   const { addNotification } = useNotifications();
   const car = location.state?.car;
+  const startFromDate = location.state?.startFromDate;
 
   const [phoneDialogOpen, setPhoneDialogOpen] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -46,15 +47,39 @@ const Booking = () => {
     }
   }, [isAuthenticated, navigate, toast]);
 
+  const today = new Date().toISOString().split('T')[0];
+  const minPickupDate = startFromDate || today;
+
+  // Calculate max date: if car has future bookings, max is the start of the next booked range
+  // Otherwise unlimited (90 days)
+  const getMaxDate = () => {
+    const futureBookings = BOOKED_RANGES
+      .filter(r => new Date(r.start) > new Date(minPickupDate))
+      .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+
+    if (futureBookings.length > 0) {
+      // Max is 1 day before the next booking starts
+      const nextBookingStart = new Date(futureBookings[0].start);
+      nextBookingStart.setDate(nextBookingStart.getDate() - 1);
+      return nextBookingStart.toISOString().split('T')[0];
+    }
+    // No future bookings: 90 days ahead
+    return new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0];
+  };
+
+  const maxDate = getMaxDate();
+
   const [formData, setFormData] = useState({
-    pickupDate: '',
+    pickupDate: minPickupDate !== today ? minPickupDate : '',
     returnDate: '',
     pickupLocation: '',
     returnLocation: '',
   });
 
-  const today = new Date().toISOString().split('T')[0];
-  const maxDate = new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0]; // 90 days ahead
+  const isDateInBookedRange = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return BOOKED_RANGES.some(r => date >= new Date(r.start) && date <= new Date(r.end));
+  };
 
   const calculateDays = () => {
     if (!formData.pickupDate || !formData.returnDate) return 0;
@@ -67,12 +92,10 @@ const Booking = () => {
   const totalDays = calculateDays();
   const totalPrice = car ? totalDays * car.pricePerDay : 0;
 
-  const isDateBooked = (dateStr: string) => BOOKED_DATES.includes(dateStr);
-
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    if (isDateBooked(value)) {
-      toast({ title: 'Date Unavailable', description: 'This date is already booked. Please choose another.', variant: 'destructive' });
+    if (isDateInBookedRange(value)) {
+      toast({ title: 'Date Unavailable', description: 'This date falls within an existing rental period. Please choose another.', variant: 'destructive' });
       return;
     }
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -148,6 +171,9 @@ const Booking = () => {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-4">
                     <h3 className="font-semibold text-lg">Rental Details</h3>
+                    {startFromDate && (
+                      <p className="text-sm text-primary font-medium">📅 Extending from previous booking. Start date set to {startFromDate}.</p>
+                    )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="pickupDate" className="flex items-center gap-2">
@@ -155,8 +181,10 @@ const Booking = () => {
                         </Label>
                         <Input id="pickupDate" name="pickupDate" type="date" required
                           value={formData.pickupDate} onChange={handleDateChange}
-                          min={today} max={maxDate} />
-                        <p className="text-xs text-muted-foreground">Min: today, Max: 90 days ahead</p>
+                          min={minPickupDate} max={maxDate} />
+                        <p className="text-xs text-muted-foreground">
+                          Available: {minPickupDate} to {maxDate}
+                        </p>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="returnDate" className="flex items-center gap-2">
@@ -164,7 +192,7 @@ const Booking = () => {
                         </Label>
                         <Input id="returnDate" name="returnDate" type="date" required
                           value={formData.returnDate} onChange={handleDateChange}
-                          min={formData.pickupDate || today} max={maxDate} />
+                          min={formData.pickupDate || minPickupDate} max={maxDate} />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="pickupLocation" className="flex items-center gap-2">
@@ -194,6 +222,19 @@ const Booking = () => {
                       </div>
                     </div>
                   </div>
+
+                  {BOOKED_RANGES.length > 0 && (
+                    <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-xl">
+                      <p className="text-sm font-medium text-yellow-600 dark:text-yellow-400 mb-2">⚠️ Unavailable Date Ranges:</p>
+                      <div className="space-y-1">
+                        {BOOKED_RANGES.filter(r => new Date(r.end) >= new Date(today)).map((r, i) => (
+                          <p key={i} className="text-xs text-muted-foreground">
+                            {r.start} → {r.end}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Payment via Chapa */}
                   <div className="space-y-4">

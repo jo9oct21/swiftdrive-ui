@@ -26,8 +26,6 @@ import { cn } from '@/lib/utils';
 import { useNotifications } from '@/contexts/NotificationContext';
 
 const penaltyTypes = [
-  { id: 'late_return', label: 'Late Return', amount: 50 },
-  { id: 'no_response', label: 'No Response', amount: 30 },
   { id: 'damage', label: 'Vehicle Damage', amount: 200 },
   { id: 'fuel_empty', label: 'Empty Fuel Tank', amount: 40 },
   { id: 'dirty_return', label: 'Dirty Vehicle', amount: 25 },
@@ -36,8 +34,10 @@ const penaltyTypes = [
 const demoBookings = [
   { id: 1, user: 'John Doe', car: 'Tesla Model 3', startDate: '2025-10-22', endDate: '2025-10-25', baseCost: 267, penaltyAmount: 0, status: 'Active', penalty: null as string | null },
   { id: 2, user: 'Jane Smith', car: 'BMW X5', startDate: '2025-10-23', endDate: '2025-10-27', baseCost: 500, penaltyAmount: 0, status: 'Pending', penalty: null as string | null },
-  { id: 3, user: 'Mike Johnson', car: 'Porsche 911', startDate: '2025-10-20', endDate: '2025-10-22', baseCost: 548, penaltyAmount: 50, status: 'Completed', penalty: 'late_return' },
+  { id: 3, user: 'Mike Johnson', car: 'Porsche 911', startDate: '2025-10-20', endDate: '2025-10-22', baseCost: 548, penaltyAmount: 200, status: 'Completed', penalty: 'damage' },
   { id: 4, user: 'Sarah Wilson', car: 'Mercedes C-Class', startDate: '2025-10-24', endDate: '2025-10-28', baseCost: 380, penaltyAmount: 0, status: 'Active', penalty: null as string | null },
+  { id: 5, user: 'Alex Brown', car: 'Audi Q7', startDate: '2025-10-26', endDate: '2025-10-30', baseCost: 460, penaltyAmount: 0, status: 'Upcoming', penalty: null as string | null },
+  { id: 6, user: 'Lisa Green', car: 'Toyota Camry', startDate: '2025-10-15', endDate: '2025-10-18', baseCost: 195, penaltyAmount: 50, status: 'Overdue', penalty: 'late_return' },
 ];
 
 const ManageBookings = () => {
@@ -55,6 +55,22 @@ const ManageBookings = () => {
     toast({ title: "Booking Completed", description: "The booking status has been updated to completed." });
   };
 
+  const handleAllowBooking = (id: number) => {
+    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'Active' } : b));
+    const booking = bookings.find(b => b.id === id);
+    addNotification({ title: 'Car Delivered', message: `The car ${booking?.car} has been delivered to ${booking?.user}. Rental is now active.`, type: 'success' });
+    toast({ title: "Booking Activated", description: "Car delivered successfully. Booking is now active." });
+  };
+
+  const handleRejectBooking = (id: number) => {
+    const booking = bookings.find(b => b.id === id);
+    if (!booking) return;
+    const refund = booking.baseCost;
+    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'Failed' } : b));
+    addNotification({ title: 'Booking Rejected', message: `Your booking for ${booking.car} was rejected due to a car problem. Full refund of $${refund} is being processed.`, type: 'warning' });
+    toast({ title: "Booking Rejected", description: `Full refund of $${refund} being processed for ${booking.user}.` });
+  };
+
   const handleAddPenalty = () => {
     if (!selectedBookingId || !selectedPenalty) return;
     const penalty = penaltyTypes.find(p => p.id === selectedPenalty);
@@ -66,7 +82,6 @@ const ManageBookings = () => {
         : b
     ));
 
-    // Send notification to user about the penalty
     addNotification({
       title: `Penalty Applied: ${penalty?.label}`,
       message: `A ${penalty?.label} penalty of $${penalty?.amount} has been applied to your booking for ${booking?.car}. Total: $${(booking?.baseCost || 0) + (penalty?.amount || 0)}`,
@@ -82,8 +97,7 @@ const ManageBookings = () => {
     const matchesSearch =
       booking.user.toLowerCase().includes(search.toLowerCase()) ||
       booking.car.toLowerCase().includes(search.toLowerCase()) ||
-      booking.startDate.includes(search) ||
-      booking.endDate.includes(search);
+      booking.status.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = !statusFilter || booking.status === statusFilter;
     const matchesDateRange =
       (!dateRange.from || new Date(booking.startDate) >= dateRange.from) &&
@@ -113,8 +127,12 @@ const ManageBookings = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem onClick={() => setStatusFilter('Active')}>Active</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setStatusFilter('Upcoming')}>Upcoming</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setStatusFilter('Completed')}>Completed</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setStatusFilter('Pending')}>Pending</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setStatusFilter('Overdue')}>Overdue</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setStatusFilter('Failed')}>Failed</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setStatusFilter('Cancelled')}>Cancelled</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           
@@ -144,7 +162,7 @@ const ManageBookings = () => {
 
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-        <Input placeholder="Search bookings..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <Input placeholder="Search by user, car name or status..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
       </div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-lg overflow-hidden">
@@ -177,7 +195,7 @@ const ManageBookings = () => {
                     <span className="text-destructive font-bold">
                       +${booking.penaltyAmount}
                       <span className="block text-xs font-normal">
-                        {penaltyTypes.find(p => p.id === booking.penalty)?.label}
+                        {penaltyTypes.find(p => p.id === booking.penalty)?.label || (booking.penalty === 'late_return' ? 'Late Return (auto)' : '')}
                       </span>
                     </span>
                   ) : (
@@ -189,7 +207,11 @@ const ManageBookings = () => {
                   <span className={`px-2 py-1 rounded-full text-xs ${
                     booking.status === 'Active' ? 'bg-green-500/20 text-green-500'
                     : booking.status === 'Pending' ? 'bg-yellow-500/20 text-yellow-500'
-                    : 'bg-blue-500/20 text-blue-500'
+                    : booking.status === 'Upcoming' ? 'bg-blue-500/20 text-blue-500'
+                    : booking.status === 'Overdue' ? 'bg-red-600/20 text-red-600'
+                    : booking.status === 'Failed' ? 'bg-orange-500/20 text-orange-500'
+                    : booking.status === 'Cancelled' ? 'bg-red-500/20 text-red-500'
+                    : 'bg-emerald-500/20 text-emerald-500'
                   }`}>
                     {booking.status}
                   </span>
@@ -201,7 +223,19 @@ const ManageBookings = () => {
                         Complete
                       </Button>
                     )}
-                    {!booking.penalty && (
+                    {booking.status === 'Upcoming' && (
+                      <>
+                        <Button size="sm" variant="outline" className="text-green-500 border-green-500/30 hover:bg-green-500/10"
+                          onClick={() => handleAllowBooking(booking.id)}>
+                          Allow
+                        </Button>
+                        <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                          onClick={() => handleRejectBooking(booking.id)}>
+                          Reject
+                        </Button>
+                      </>
+                    )}
+                    {!booking.penalty && (booking.status === 'Active' || booking.status === 'Completed') && (
                       <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/10"
                         onClick={() => { setSelectedBookingId(booking.id); setPenaltyDialogOpen(true); }}>
                         <AlertTriangle className="h-3 w-3 mr-1" /> Penalty
