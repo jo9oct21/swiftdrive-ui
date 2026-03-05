@@ -32,11 +32,11 @@ import Dashboard from "./pages/admin/Dashboard";
 import ManageCars from "./pages/admin/ManageCars";
 import ManageUsers from "./pages/admin/ManageUsers";
 import ManageBookings from "./pages/admin/ManageBookings";
-import AdminHistory from "./pages/admin/AdminHistory";
 import SuperAdminLayout from "./components/superadmin/SuperAdminLayout";
 import SuperAdminDashboard from "./pages/superadmin/SuperAdminDashboard";
 import SuperAdminUsers from "./pages/superadmin/SuperAdminUsers";
 import SuperAdminAdmins from "./pages/superadmin/SuperAdminAdmins";
+import AdminHistory from "./pages/admin/AdminHistory";
 
 const queryClient = new QueryClient();
 
@@ -57,13 +57,14 @@ const App = () => (
                 <Route path="cars" element={<ManageCars />} />
                 <Route path="users" element={<ManageUsers />} />
                 <Route path="bookings" element={<ManageBookings />} />
-                <Route path="history" element={<AdminHistory />} />
               </Route>
 
               <Route path="/superadmin" element={<SuperAdminLayout />}>
                 <Route index element={<SuperAdminDashboard />} />
                 <Route path="users" element={<SuperAdminUsers />} />
                 <Route path="admins" element={<SuperAdminAdmins />} />
+                <Route path="cars" element={<ManageCars />} />
+                <Route path="history" element={<AdminHistory />} />
               </Route>
 
               <Route path="/*" element={

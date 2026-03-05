@@ -10,10 +10,10 @@ import { format } from 'date-fns';
 
 const getNotificationIcon = (type: Notification['type']) => {
   switch (type) {
-    case 'info': return <Info className="h-5 w-5 text-blue-500" />;
-    case 'warning': return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
-    case 'success': return <CircleCheck className="h-5 w-5 text-green-500" />;
-    case 'penalty': return <AlertCircle className="h-5 w-5 text-red-500" />;
+    case 'info': return <Info className="h-5 w-5 text-blue-500 flex-shrink-0" />;
+    case 'warning': return <AlertTriangle className="h-5 w-5 text-yellow-500 flex-shrink-0" />;
+    case 'success': return <CircleCheck className="h-5 w-5 text-green-500 flex-shrink-0" />;
+    case 'penalty': return <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />;
   }
 };
 
@@ -40,25 +40,25 @@ const Notifications = () => {
 
   return (
     <div className="min-h-screen bg-background pt-24 pb-16">
-      <div className="container mx-auto px-4 max-w-3xl">
+      <div className="container mx-auto px-4 max-w-3xl overflow-x-hidden">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
             <div className="flex items-center gap-3">
-              <Bell className="w-8 h-8 text-primary" />
+              <Bell className="w-6 h-6 sm:w-8 sm:h-8 text-primary flex-shrink-0" />
               <div>
-                <h1 className="text-3xl md:text-4xl font-bold">Notifications</h1>
-                <p className="text-muted-foreground">{unreadCount} unread</p>
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Notifications</h1>
+                <p className="text-muted-foreground text-sm">{unreadCount} unread</p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               {unreadCount > 0 && (
                 <Button variant="outline" size="sm" onClick={markAllAsRead}>
-                  <CheckCheck className="h-4 w-4 mr-2" /> Mark all read
+                  <CheckCheck className="h-4 w-4 mr-1 sm:mr-2" /> <span className="hidden sm:inline">Mark all</span> read
                 </Button>
               )}
               {notifications.length > 0 && (
                 <Button variant="outline" size="sm" onClick={clearAll}>
-                  <Trash2 className="h-4 w-4 mr-2" /> Clear all
+                  <Trash2 className="h-4 w-4 mr-1 sm:mr-2" /> Clear<span className="hidden sm:inline"> all</span>
                 </Button>
               )}
             </div>
@@ -73,28 +73,20 @@ const Notifications = () => {
           ) : (
             <div className="space-y-3">
               {notifications.map((notification, index) => (
-                <motion.div
-                  key={notification.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
+                <motion.div key={notification.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.05 }}>
                   <Card
                     className={`cursor-pointer transition-all hover:shadow-md border ${getNotificationBg(notification.type, notification.read)} ${!notification.read ? 'border-l-4' : ''}`}
-                    onClick={() => markAsRead(notification.id)}
-                  >
-                    <CardContent className="p-4 flex items-start gap-4">
+                    onClick={() => markAsRead(notification.id)}>
+                    <CardContent className="p-3 sm:p-4 flex items-start gap-3 sm:gap-4">
                       <div className="mt-0.5">{getNotificationIcon(notification.type)}</div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className={`font-semibold text-sm ${!notification.read ? 'text-foreground' : 'text-muted-foreground'}`}>
+                          <h3 className={`font-semibold text-sm truncate ${!notification.read ? 'text-foreground' : 'text-muted-foreground'}`}>
                             {notification.title}
                           </h3>
-                          {!notification.read && (
-                            <span className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />
-                          )}
+                          {!notification.read && <span className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />}
                         </div>
-                        <p className="text-sm text-muted-foreground">{notification.message}</p>
+                        <p className="text-sm text-muted-foreground break-words">{notification.message}</p>
                         <p className="text-xs text-muted-foreground/70 mt-2">
                           {format(new Date(notification.createdAt), 'MMM d, yyyy • h:mm a')}
                         </p>

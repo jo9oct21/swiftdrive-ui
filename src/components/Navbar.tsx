@@ -52,7 +52,9 @@ const Navbar = () => {
     <motion.nav 
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      className="fixed top-0 left-0 right-0 z-50 glass-card"
+      className={`fixed top-0 left-0 right-0 z-50 border-b border-border/50 backdrop-blur-xl ${
+        theme === 'light' ? 'bg-white/95' : 'bg-card/90'
+      }`}
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
@@ -64,7 +66,7 @@ const Navbar = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden lg:flex items-center gap-8">
             {links.map((link) => (
               <Link key={link.path} to={link.path} className="relative group">
                 <span className={`text-sm font-medium transition-colors duration-300 ${
@@ -125,6 +127,42 @@ const Navbar = () => {
             )}
           </div>
 
+          {/* Tablet: show icons + hamburger */}
+          <div className="hidden md:flex lg:hidden items-center gap-3">
+            {isAuthenticated && (
+              <>
+                {favoritesEnabled && (
+                  <Link to="/favorites" className="relative group">
+                    <Heart className={`h-5 w-5 transition-all duration-300 group-hover:text-gold group-hover:scale-110 ${
+                      theme === 'light' ? 'text-foreground' : 'text-white'
+                    }`} />
+                    {favorites.length > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                        {favorites.length}
+                      </span>
+                    )}
+                  </Link>
+                )}
+                {notificationsEnabled && (
+                  <Link to="/notifications" className="relative group">
+                    <Bell className={`h-5 w-5 transition-all duration-300 group-hover:text-gold group-hover:scale-110 ${
+                      theme === 'light' ? 'text-foreground' : 'text-white'
+                    }`} />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </Link>
+                )}
+              </>
+            )}
+            <ThemeToggle />
+            <button className="p-2" onClick={() => setIsOpen(!isOpen)}>
+              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
+
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center gap-2">
             <ThemeToggle />
@@ -134,14 +172,14 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Mobile Navigation */}
+        {/* Mobile/Tablet Navigation */}
         <AnimatePresence>
           {isOpen && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="md:hidden border-t border-border overflow-hidden"
+              className="lg:hidden border-t border-border overflow-hidden"
             >
               <div className="py-4 space-y-4">
                 {links.map((link) => (
@@ -156,13 +194,13 @@ const Navbar = () => {
                 {isAuthenticated && (
                   <>
                     {favoritesEnabled && (
-                      <Link to="/favorites" className="flex items-center gap-2 py-2 px-4 rounded-lg transition-all duration-300 text-foreground hover:text-gold" onClick={() => setIsOpen(false)}>
+                      <Link to="/favorites" className="flex items-center gap-2 py-2 px-4 rounded-lg transition-all duration-300 text-foreground hover:text-gold md:hidden" onClick={() => setIsOpen(false)}>
                         <Heart className="w-4 h-4" /> Favorites
                         {favorites.length > 0 && <span className="ml-auto bg-destructive text-destructive-foreground text-xs px-2 py-0.5 rounded-full font-bold">{favorites.length}</span>}
                       </Link>
                     )}
                     {notificationsEnabled && (
-                      <Link to="/notifications" className="flex items-center gap-2 py-2 px-4 rounded-lg transition-all duration-300 text-foreground hover:text-gold" onClick={() => setIsOpen(false)}>
+                      <Link to="/notifications" className="flex items-center gap-2 py-2 px-4 rounded-lg transition-all duration-300 text-foreground hover:text-gold md:hidden" onClick={() => setIsOpen(false)}>
                         <Bell className="w-4 h-4" /> Notifications
                         {unreadCount > 0 && <span className="ml-auto bg-destructive text-destructive-foreground text-xs px-2 py-0.5 rounded-full font-bold">{unreadCount}</span>}
                       </Link>
