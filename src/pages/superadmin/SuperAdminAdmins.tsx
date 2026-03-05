@@ -16,7 +16,15 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 
-const demoAdmins = [
+interface AdminItem {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+}
+
+const initialAdmins: AdminItem[] = [
   { id: 1, name: 'Admin User', email: 'admin@luxedrive.com', role: 'Admin', status: 'Active' },
   { id: 2, name: 'Jane Admin', email: 'jane.admin@luxedrive.com', role: 'Admin', status: 'Active' },
   { id: 3, name: 'Tom Manager', email: 'tom@luxedrive.com', role: 'Admin', status: 'Active' },
@@ -25,7 +33,7 @@ const demoAdmins = [
 const SuperAdminAdmins = () => {
   const { toast } = useToast();
   const [search, setSearch] = useState('');
-  const [adminList, setAdminList] = useState(demoAdmins);
+  const [adminList, setAdminList] = useState(initialAdmins);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogAction, setDialogAction] = useState<'suspend' | 'demote'>('suspend');
   const [selectedAdminId, setSelectedAdminId] = useState<number | null>(null);
@@ -53,10 +61,12 @@ const SuperAdminAdmins = () => {
       ));
       toast({ title: 'Success', description: `Admin ${newStatus === 'Suspended' ? 'suspended' : 'unsuspended'} successfully` });
     } else {
-      setAdminList(prev => prev.map(a =>
-        a.id === selectedAdminId ? { ...a, role: 'User' } : a
-      ));
-      toast({ title: 'Success', description: 'Admin returned to User role' });
+      // Remove from admins list (demoted to user)
+      const admin = adminList.find(a => a.id === selectedAdminId);
+      if (admin) {
+        setAdminList(prev => prev.filter(a => a.id !== selectedAdminId));
+        toast({ title: 'Success', description: `${admin.name} returned to User role and moved to Users page` });
+      }
     }
 
     setDialogOpen(false);
@@ -66,10 +76,10 @@ const SuperAdminAdmins = () => {
   const selectedAdmin = adminList.find(a => a.id === selectedAdminId);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div>
-        <h1 className="text-4xl font-bold text-gradient mb-2">Manage Admins</h1>
-        <p className="text-muted-foreground">View and manage administrator accounts</p>
+        <h1 className="text-2xl sm:text-4xl font-bold text-gradient mb-2">Manage Admins</h1>
+        <p className="text-muted-foreground text-sm sm:text-base">View and manage administrator accounts</p>
       </div>
 
       <div className="relative max-w-md">
@@ -77,12 +87,12 @@ const SuperAdminAdmins = () => {
         <Input placeholder="Search admins..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
       </div>
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-lg overflow-hidden">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-lg overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
+              <TableHead className="hidden sm:table-cell">Email</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -91,12 +101,17 @@ const SuperAdminAdmins = () => {
           <TableBody>
             {filteredAdmins.map((admin) => (
               <TableRow key={admin.id}>
-                <TableCell className="font-medium">{admin.name}</TableCell>
-                <TableCell>{admin.email}</TableCell>
+                <TableCell className="font-medium">
+                  <div>
+                    <p>{admin.name}</p>
+                    <p className="text-xs text-muted-foreground sm:hidden">{admin.email}</p>
+                  </div>
+                </TableCell>
+                <TableCell className="hidden sm:table-cell">{admin.email}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <Shield className="w-4 h-4 text-primary" />
-                    <span>{admin.role}</span>
+                    <span className="hidden sm:inline">{admin.role}</span>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -143,7 +158,7 @@ const SuperAdminAdmins = () => {
                 ? (selectedAdmin?.status === 'Suspended'
                     ? 'This will restore the admin\'s access.'
                     : 'This will temporarily block the admin from accessing their account.')
-                : 'This will remove admin privileges and return them to a regular user.'}
+                : `This will remove ${selectedAdmin?.name}'s admin privileges and move them to the Users page.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

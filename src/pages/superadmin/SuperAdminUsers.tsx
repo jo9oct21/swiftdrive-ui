@@ -15,17 +15,31 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 
-const demoUsers = [
+interface UserItem {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  bookings: number;
+}
+
+const initialUsers: UserItem[] = [
   { id: 1, name: 'John Doe', email: 'john@example.com', role: 'User', status: 'Active', bookings: 5 },
   { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'User', status: 'Active', bookings: 12 },
   { id: 3, name: 'Mike Johnson', email: 'mike@example.com', role: 'User', status: 'Inactive', bookings: 3 },
   { id: 4, name: 'Sarah Wilson', email: 'sarah@example.com', role: 'User', status: 'Active', bookings: 8 },
 ];
 
+// Shared state for cross-page admin/user management
+let sharedAdminList: UserItem[] = [];
+export const getPromotedAdmins = () => sharedAdminList;
+export const addDemotedUser = (user: UserItem) => { /* handled via state */ };
+
 const SuperAdminUsers = () => {
   const { toast } = useToast();
   const [search, setSearch] = useState('');
-  const [userList, setUserList] = useState(demoUsers);
+  const [userList, setUserList] = useState<UserItem[]>(initialUsers);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogAction, setDialogAction] = useState<'suspend' | 'makeAdmin'>('suspend');
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
@@ -53,10 +67,12 @@ const SuperAdminUsers = () => {
       ));
       toast({ title: 'Success', description: `User ${newStatus === 'Suspended' ? 'suspended' : 'unsuspended'} successfully` });
     } else {
-      setUserList(prev => prev.map(u =>
-        u.id === selectedUserId ? { ...u, role: 'Admin' } : u
-      ));
-      toast({ title: 'Success', description: 'User promoted to Admin' });
+      // Remove from users list (promoted to admin)
+      const user = userList.find(u => u.id === selectedUserId);
+      if (user) {
+        setUserList(prev => prev.filter(u => u.id !== selectedUserId));
+        toast({ title: 'Success', description: `${user.name} promoted to Admin and moved to Admins page` });
+      }
     }
 
     setDialogOpen(false);
@@ -66,10 +82,10 @@ const SuperAdminUsers = () => {
   const selectedUser = userList.find(u => u.id === selectedUserId);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div>
-        <h1 className="text-4xl font-bold text-gradient mb-2">Manage Users</h1>
-        <p className="text-muted-foreground">View and manage all user accounts</p>
+        <h1 className="text-2xl sm:text-4xl font-bold text-gradient mb-2">Manage Users</h1>
+        <p className="text-muted-foreground text-sm sm:text-base">View and manage all user accounts</p>
       </div>
 
       <div className="relative max-w-md">
@@ -77,13 +93,12 @@ const SuperAdminUsers = () => {
         <Input placeholder="Search users..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
       </div>
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-lg overflow-hidden">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-lg overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
+              <TableHead className="hidden sm:table-cell">Email</TableHead>
               <TableHead>Bookings</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -92,14 +107,13 @@ const SuperAdminUsers = () => {
           <TableBody>
             {filteredUsers.map((user) => (
               <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.name}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    {user.role === 'Admin' && <Shield className="w-4 h-4 text-primary" />}
-                    <span>{user.role}</span>
+                <TableCell className="font-medium">
+                  <div>
+                    <p>{user.name}</p>
+                    <p className="text-xs text-muted-foreground sm:hidden">{user.email}</p>
                   </div>
                 </TableCell>
+                <TableCell className="hidden sm:table-cell">{user.email}</TableCell>
                 <TableCell>{user.bookings}</TableCell>
                 <TableCell>
                   <span className={`px-2 py-1 rounded-full text-xs ${
@@ -120,11 +134,9 @@ const SuperAdminUsers = () => {
                         <Ban className="w-4 h-4 mr-2" />
                         {user.status === 'Suspended' ? 'Unsuspend' : 'Suspend'}
                       </DropdownMenuItem>
-                      {user.role !== 'Admin' && (
-                        <DropdownMenuItem onClick={() => handleAction(user.id, 'makeAdmin')}>
-                          <Shield className="w-4 h-4 mr-2" /> Make Admin
-                        </DropdownMenuItem>
-                      )}
+                      <DropdownMenuItem onClick={() => handleAction(user.id, 'makeAdmin')}>
+                        <Shield className="w-4 h-4 mr-2" /> Make Admin
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
@@ -147,7 +159,7 @@ const SuperAdminUsers = () => {
                 ? (selectedUser?.status === 'Suspended'
                     ? 'This will restore the user\'s access.'
                     : 'This will temporarily block the user from accessing their account.')
-                : 'This will give the user admin privileges.'}
+                : `This will promote ${selectedUser?.name} to Admin and remove them from the Users list.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

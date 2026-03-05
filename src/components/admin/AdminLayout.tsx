@@ -10,7 +10,6 @@ const navItems = [
   { name: 'Cars', path: '/admin/cars', icon: Car },
   { name: 'Users', path: '/admin/users', icon: Users },
   { name: 'Bookings', path: '/admin/bookings', icon: BookOpen },
-  { name: 'History', path: '/admin/history', icon: Clock },
 ];
 
 const AdminLayout = () => {
@@ -20,9 +19,7 @@ const AdminLayout = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    if (!isAdmin) {
-      navigate('/');
-    }
+    if (!isAdmin) navigate('/');
   }, [isAdmin, navigate]);
 
   if (!isAdmin) return null;
@@ -64,8 +61,7 @@ const AdminLayout = () => {
           <div className="mt-6 space-y-4 pt-4 border-t border-border">
             <ThemeToggle />
             <Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/')}>
-              <Home className="w-5 h-5 mr-3" />
-              Back to Home
+              <Home className="w-5 h-5 mr-3" /> Back to Home
             </Button>
           </div>
         </div>
@@ -101,8 +97,7 @@ const AdminLayout = () => {
             <div className="space-y-4 pt-4 border-t border-border">
               <ThemeToggle />
               <Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/')}>
-                <Home className="w-5 h-5 mr-3" />
-                Back to Home
+                <Home className="w-5 h-5 mr-3" /> Back to Home
               </Button>
             </div>
           </div>

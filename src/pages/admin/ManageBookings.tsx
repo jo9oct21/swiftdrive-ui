@@ -32,12 +32,12 @@ const penaltyTypes = [
 ];
 
 const demoBookings = [
-  { id: 1, user: 'John Doe', car: 'Tesla Model 3', startDate: '2025-10-22', endDate: '2025-10-25', baseCost: 267, penaltyAmount: 0, status: 'Active', penalty: null as string | null },
-  { id: 2, user: 'Jane Smith', car: 'BMW X5', startDate: '2025-10-23', endDate: '2025-10-27', baseCost: 500, penaltyAmount: 0, status: 'Pending', penalty: null as string | null },
-  { id: 3, user: 'Mike Johnson', car: 'Porsche 911', startDate: '2025-10-20', endDate: '2025-10-22', baseCost: 548, penaltyAmount: 200, status: 'Completed', penalty: 'damage' },
-  { id: 4, user: 'Sarah Wilson', car: 'Mercedes C-Class', startDate: '2025-10-24', endDate: '2025-10-28', baseCost: 380, penaltyAmount: 0, status: 'Active', penalty: null as string | null },
-  { id: 5, user: 'Alex Brown', car: 'Audi Q7', startDate: '2025-10-26', endDate: '2025-10-30', baseCost: 460, penaltyAmount: 0, status: 'Upcoming', penalty: null as string | null },
-  { id: 6, user: 'Lisa Green', car: 'Toyota Camry', startDate: '2025-10-15', endDate: '2025-10-18', baseCost: 195, penaltyAmount: 50, status: 'Overdue', penalty: 'late_return' },
+  { id: 1, user: 'John Doe', car: 'Tesla Model 3', startDate: '2025-10-22', endDate: '2025-10-25', baseCost: 267, penaltyAmount: 0, penaltyPaid: false, status: 'Active', penalty: null as string | null },
+  { id: 2, user: 'Jane Smith', car: 'BMW X5', startDate: '2025-10-23', endDate: '2025-10-27', baseCost: 500, penaltyAmount: 0, penaltyPaid: false, status: 'Pending', penalty: null as string | null },
+  { id: 3, user: 'Mike Johnson', car: 'Porsche 911', startDate: '2025-10-20', endDate: '2025-10-22', baseCost: 548, penaltyAmount: 200, penaltyPaid: false, status: 'Completed', penalty: 'damage' },
+  { id: 4, user: 'Sarah Wilson', car: 'Mercedes C-Class', startDate: '2025-10-24', endDate: '2025-10-28', baseCost: 380, penaltyAmount: 0, penaltyPaid: false, status: 'Active', penalty: null as string | null },
+  { id: 5, user: 'Alex Brown', car: 'Audi Q7', startDate: '2025-10-26', endDate: '2025-10-30', baseCost: 460, penaltyAmount: 0, penaltyPaid: false, status: 'Upcoming', penalty: null as string | null },
+  { id: 6, user: 'Lisa Green', car: 'Toyota Camry', startDate: '2025-10-15', endDate: '2025-10-18', baseCost: 195, penaltyAmount: 50, penaltyPaid: false, status: 'Overdue', penalty: 'late_return' },
 ];
 
 const ManageBookings = () => {
@@ -51,7 +51,15 @@ const ManageBookings = () => {
   const { addNotification } = useNotifications();
 
   const handleCompleteBooking = (id: number) => {
+    const booking = bookings.find(b => b.id === id);
+    if (!booking) return;
+    // If overdue and penalty not paid, block completion
+    if (booking.status === 'Overdue' && !booking.penaltyPaid) {
+      toast({ title: "Cannot Complete", description: "User must pay the penalty before completing this booking.", variant: 'destructive' });
+      return;
+    }
     setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'Completed' } : b));
+    addNotification({ title: 'Booking Completed', message: `Your booking for ${booking.car} has been marked as completed.`, type: 'success' });
     toast({ title: "Booking Completed", description: "The booking status has been updated to completed." });
   };
 
@@ -66,8 +74,8 @@ const ManageBookings = () => {
     const booking = bookings.find(b => b.id === id);
     if (!booking) return;
     const refund = booking.baseCost;
-    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'Failed' } : b));
-    addNotification({ title: 'Booking Rejected', message: `Your booking for ${booking.car} was rejected due to a car problem. Full refund of $${refund} is being processed.`, type: 'warning' });
+    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'Failed', penaltyAmount: 0 } : b));
+    addNotification({ title: 'Booking Rejected', message: `Your booking for ${booking.car} was rejected. Full refund of $${refund} is being processed.`, type: 'warning' });
     toast({ title: "Booking Rejected", description: `Full refund of $${refund} being processed for ${booking.user}.` });
   };
 
@@ -75,22 +83,34 @@ const ManageBookings = () => {
     if (!selectedBookingId || !selectedPenalty) return;
     const penalty = penaltyTypes.find(p => p.id === selectedPenalty);
     const booking = bookings.find(b => b.id === selectedBookingId);
-    
     setBookings(prev => prev.map(b =>
-      b.id === selectedBookingId
-        ? { ...b, penalty: selectedPenalty, penaltyAmount: penalty?.amount || 0 }
-        : b
+      b.id === selectedBookingId ? { ...b, penalty: selectedPenalty, penaltyAmount: penalty?.amount || 0 } : b
     ));
-
     addNotification({
       title: `Penalty Applied: ${penalty?.label}`,
       message: `A ${penalty?.label} penalty of $${penalty?.amount} has been applied to your booking for ${booking?.car}. Total: $${(booking?.baseCost || 0) + (penalty?.amount || 0)}`,
       type: 'penalty',
     });
-
     toast({ title: "Penalty Applied", description: `${penalty?.label} penalty of $${penalty?.amount} has been added and user notified.` });
     setPenaltyDialogOpen(false);
     setSelectedPenalty('');
+  };
+
+  const handleAddOverduePenalty = (id: number) => {
+    const booking = bookings.find(b => b.id === id);
+    if (!booking) return;
+    const now = new Date();
+    const endDate = new Date(booking.endDate);
+    const daysLate = Math.max(1, Math.ceil((now.getTime() - endDate.getTime()) / 86400000));
+    const penaltyPerDay = 50;
+    const totalPenalty = daysLate * penaltyPerDay;
+    setBookings(prev => prev.map(b => b.id === id ? { ...b, penaltyAmount: totalPenalty, penalty: 'late_return' } : b));
+    addNotification({
+      title: 'Overdue Penalty Updated',
+      message: `Your overdue penalty for ${booking.car} is now $${totalPenalty} (${daysLate} days × $${penaltyPerDay}/day).`,
+      type: 'penalty',
+    });
+    toast({ title: "Penalty Updated", description: `Overdue penalty set to $${totalPenalty} for ${daysLate} late days.` });
   };
 
   const filteredBookings = bookings.filter((booking) => {
@@ -112,17 +132,17 @@ const ManageBookings = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-4xl font-bold text-gradient mb-2">Manage Bookings</h1>
-          <p className="text-muted-foreground">View and manage all rental bookings</p>
+          <h1 className="text-2xl sm:text-4xl font-bold text-gradient mb-2">Manage Bookings</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">View and manage all rental bookings</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <Filter className="w-5 h-5 mr-2" /> {statusFilter || 'Filter'}
+              <Button variant="outline" size="sm">
+                <Filter className="w-4 h-4 mr-2" /> {statusFilter || 'Filter'}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
@@ -138,19 +158,15 @@ const ManageBookings = () => {
           
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline">
-                <Calendar className="w-5 h-5 mr-2" />
-                {dateRange.from ? (dateRange.to ? `${format(dateRange.from, 'MMM d')} - ${format(dateRange.to, 'MMM d')}` : format(dateRange.from, 'MMM d, yyyy')) : 'Date Range'}
+              <Button variant="outline" size="sm">
+                <Calendar className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">{dateRange.from ? (dateRange.to ? `${format(dateRange.from, 'MMM d')} - ${format(dateRange.to, 'MMM d')}` : format(dateRange.from, 'MMM d, yyyy')) : 'Date Range'}</span>
+                <span className="sm:hidden">Date</span>
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="end">
-              <CalendarComponent
-                mode="range"
-                selected={{ from: dateRange.from, to: dateRange.to }}
-                onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
-                numberOfMonths={2}
-                className={cn("p-3 pointer-events-auto")}
-              />
+              <CalendarComponent mode="range" selected={{ from: dateRange.from, to: dateRange.to }}
+                onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })} numberOfMonths={2} className={cn("p-3 pointer-events-auto")} />
             </PopoverContent>
           </Popover>
 
@@ -165,17 +181,17 @@ const ManageBookings = () => {
         <Input placeholder="Search by user, car name or status..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
       </div>
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-lg overflow-hidden">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-lg overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>ID</TableHead>
               <TableHead>User</TableHead>
               <TableHead>Car</TableHead>
-              <TableHead>Start Date</TableHead>
-              <TableHead>End Date</TableHead>
-              <TableHead>Base Cost</TableHead>
-              <TableHead>Penalty</TableHead>
+              <TableHead className="hidden sm:table-cell">Start Date</TableHead>
+              <TableHead className="hidden sm:table-cell">End Date</TableHead>
+              <TableHead className="hidden md:table-cell">Base Cost</TableHead>
+              <TableHead className="hidden md:table-cell">Penalty</TableHead>
               <TableHead>Total</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Actions</TableHead>
@@ -187,10 +203,10 @@ const ManageBookings = () => {
                 <TableCell className="font-medium">#{booking.id}</TableCell>
                 <TableCell>{booking.user}</TableCell>
                 <TableCell>{booking.car}</TableCell>
-                <TableCell>{booking.startDate}</TableCell>
-                <TableCell>{booking.endDate}</TableCell>
-                <TableCell className="font-medium">${booking.baseCost}</TableCell>
-                <TableCell>
+                <TableCell className="hidden sm:table-cell">{booking.startDate}</TableCell>
+                <TableCell className="hidden sm:table-cell">{booking.endDate}</TableCell>
+                <TableCell className="hidden md:table-cell font-medium">${booking.baseCost}</TableCell>
+                <TableCell className="hidden md:table-cell">
                   {booking.penaltyAmount > 0 ? (
                     <span className="text-destructive font-bold">
                       +${booking.penaltyAmount}
@@ -204,7 +220,7 @@ const ManageBookings = () => {
                 </TableCell>
                 <TableCell className="font-bold">${booking.baseCost + booking.penaltyAmount}</TableCell>
                 <TableCell>
-                  <span className={`px-2 py-1 rounded-full text-xs ${
+                  <span className={`px-2 py-1 rounded-full text-xs whitespace-nowrap ${
                     booking.status === 'Active' ? 'bg-green-500/20 text-green-500'
                     : booking.status === 'Pending' ? 'bg-yellow-500/20 text-yellow-500'
                     : booking.status === 'Upcoming' ? 'bg-blue-500/20 text-blue-500'
@@ -217,11 +233,25 @@ const ManageBookings = () => {
                   </span>
                 </TableCell>
                 <TableCell>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-1">
                     {booking.status === 'Active' && (
                       <Button size="sm" variant="outline" onClick={() => handleCompleteBooking(booking.id)}>
                         Complete
                       </Button>
+                    )}
+                    {booking.status === 'Overdue' && (
+                      <>
+                        <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                          onClick={() => handleAddOverduePenalty(booking.id)}>
+                          <AlertTriangle className="h-3 w-3 mr-1" /> Penalty
+                        </Button>
+                        <Button size="sm" variant="outline"
+                          className={!booking.penaltyPaid ? 'opacity-50 cursor-not-allowed' : ''}
+                          onClick={() => handleCompleteBooking(booking.id)}
+                          disabled={!booking.penaltyPaid}>
+                          Complete
+                        </Button>
+                      </>
                     )}
                     {booking.status === 'Upcoming' && (
                       <>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Shield, Home, Menu, X, Crown } from 'lucide-react';
+import { LayoutDashboard, Users, Shield, Home, Menu, X, Crown, Car, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,6 +9,8 @@ const navItems = [
   { name: 'Dashboard', path: '/superadmin', icon: LayoutDashboard },
   { name: 'Users', path: '/superadmin/users', icon: Users },
   { name: 'Admins', path: '/superadmin/admins', icon: Shield },
+  { name: 'Cars', path: '/superadmin/cars', icon: Car },
+  { name: 'History', path: '/superadmin/history', icon: Clock },
 ];
 
 const SuperAdminLayout = () => {
@@ -18,9 +20,7 @@ const SuperAdminLayout = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    if (!isSuperAdmin) {
-      navigate('/');
-    }
+    if (!isSuperAdmin) navigate('/');
   }, [isSuperAdmin, navigate]);
 
   if (!isSuperAdmin) return null;
