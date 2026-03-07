@@ -53,7 +53,7 @@ const Navbar = () => {
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       className={`fixed top-0 left-0 right-0 z-50 border-b border-border/50 backdrop-blur-xl ${
-        theme === 'light' ? 'bg-white/95' : 'bg-card/90'
+        theme === 'light' ? 'bg-white' : 'bg-card/90'
       }`}
     >
       <div className="container mx-auto px-4">
@@ -127,8 +127,8 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* Tablet: show icons + hamburger */}
-          <div className="hidden md:flex lg:hidden items-center gap-3">
+          {/* Tablet & Mobile: show icons + hamburger */}
+          <div className="lg:hidden flex items-center gap-2 sm:gap-3">
             {isAuthenticated && (
               <>
                 {favoritesEnabled && (
@@ -137,7 +137,7 @@ const Navbar = () => {
                       theme === 'light' ? 'text-foreground' : 'text-white'
                     }`} />
                     {favorites.length > 0 && (
-                      <span className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                      <span className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-xs w-4 h-4 rounded-full flex items-center justify-center font-bold text-[10px]">
                         {favorites.length}
                       </span>
                     )}
@@ -149,22 +149,15 @@ const Navbar = () => {
                       theme === 'light' ? 'text-foreground' : 'text-white'
                     }`} />
                     {unreadCount > 0 && (
-                      <span className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                      <span className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-xs w-4 h-4 rounded-full flex items-center justify-center font-bold text-[10px]">
                         {unreadCount}
                       </span>
                     )}
                   </Link>
                 )}
+                <ProfileDropdown />
               </>
             )}
-            <ThemeToggle />
-            <button className="p-2" onClick={() => setIsOpen(!isOpen)}>
-              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center gap-2">
             <ThemeToggle />
             <button className="p-2" onClick={() => setIsOpen(!isOpen)}>
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -191,24 +184,8 @@ const Navbar = () => {
                     {link.label}
                   </Link>
                 ))}
-                {isAuthenticated && (
-                  <>
-                    {favoritesEnabled && (
-                      <Link to="/favorites" className="flex items-center gap-2 py-2 px-4 rounded-lg transition-all duration-300 text-foreground hover:text-gold md:hidden" onClick={() => setIsOpen(false)}>
-                        <Heart className="w-4 h-4" /> Favorites
-                        {favorites.length > 0 && <span className="ml-auto bg-destructive text-destructive-foreground text-xs px-2 py-0.5 rounded-full font-bold">{favorites.length}</span>}
-                      </Link>
-                    )}
-                    {notificationsEnabled && (
-                      <Link to="/notifications" className="flex items-center gap-2 py-2 px-4 rounded-lg transition-all duration-300 text-foreground hover:text-gold md:hidden" onClick={() => setIsOpen(false)}>
-                        <Bell className="w-4 h-4" /> Notifications
-                        {unreadCount > 0 && <span className="ml-auto bg-destructive text-destructive-foreground text-xs px-2 py-0.5 rounded-full font-bold">{unreadCount}</span>}
-                      </Link>
-                    )}
-                  </>
-                )}
                 <div className="px-4 space-y-2">
-                {isAuthenticated ? (
+                  {isAuthenticated ? (
                     <Link to="/settings" onClick={() => setIsOpen(false)}>
                       <Button variant="ghost" className="w-full justify-start" size="sm">
                         <User className="w-4 h-4 mr-2" /> Settings

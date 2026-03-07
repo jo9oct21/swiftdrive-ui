@@ -53,7 +53,6 @@ const ManageBookings = () => {
   const handleCompleteBooking = (id: number) => {
     const booking = bookings.find(b => b.id === id);
     if (!booking) return;
-    // If overdue and penalty not paid, block completion
     if (booking.status === 'Overdue' && !booking.penaltyPaid) {
       toast({ title: "Cannot Complete", description: "User must pay the penalty before completing this booking.", variant: 'destructive' });
       return;
@@ -241,7 +240,7 @@ const ManageBookings = () => {
                     )}
                     {booking.status === 'Overdue' && (
                       <>
-                        <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                        <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive hover:text-white transition-colors"
                           onClick={() => handleAddOverduePenalty(booking.id)}>
                           <AlertTriangle className="h-3 w-3 mr-1" /> Penalty
                         </Button>
@@ -255,18 +254,18 @@ const ManageBookings = () => {
                     )}
                     {booking.status === 'Upcoming' && (
                       <>
-                        <Button size="sm" variant="outline" className="text-green-500 border-green-500/30 hover:bg-green-500/10"
+                        <Button size="sm" variant="outline" className="text-green-500 border-green-500/30 hover:bg-green-500 hover:text-white transition-colors"
                           onClick={() => handleAllowBooking(booking.id)}>
                           Allow
                         </Button>
-                        <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                        <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive hover:text-white transition-colors"
                           onClick={() => handleRejectBooking(booking.id)}>
                           Reject
                         </Button>
                       </>
                     )}
                     {!booking.penalty && (booking.status === 'Active' || booking.status === 'Completed') && (
-                      <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                      <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive hover:text-white transition-colors"
                         onClick={() => { setSelectedBookingId(booking.id); setPenaltyDialogOpen(true); }}>
                         <AlertTriangle className="h-3 w-3 mr-1" /> Penalty
                       </Button>
