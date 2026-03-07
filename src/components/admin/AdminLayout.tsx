@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Car, Users, BookOpen, Home, Menu, X, Shield, Clock } from 'lucide-react';
+import { LayoutDashboard, Users, BookOpen, Home, Menu, X, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
 
 const navItems = [
   { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
-  { name: 'Cars', path: '/admin/cars', icon: Car },
   { name: 'Users', path: '/admin/users', icon: Users },
   { name: 'Bookings', path: '/admin/bookings', icon: BookOpen },
 ];

@@ -1,16 +1,17 @@
 import { motion } from 'framer-motion';
-import { Users, Shield, TrendingUp, BookOpen, DollarSign, Car, AlertTriangle, Calendar } from 'lucide-react';
+import { Users, Shield, TrendingUp, BookOpen, DollarSign, Car, AlertTriangle, Calendar, Trophy } from 'lucide-react';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Legend } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 const stats = [
-  { title: 'Total Users', value: 1834, icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-  { title: 'Total Admins', value: 5, icon: Shield, color: 'text-purple-500', bg: 'bg-purple-500/10' },
-  { title: 'Suspended Users', value: 12, icon: AlertTriangle, color: 'text-red-500', bg: 'bg-red-500/10' },
-  { title: 'Active Bookings', value: 892, icon: BookOpen, color: 'text-green-500', bg: 'bg-green-500/10' },
-  { title: 'Total Revenue', value: 284500, icon: DollarSign, color: 'text-gold', bg: 'bg-yellow-500/10' },
-  { title: 'Fleet Size', value: 156, icon: Car, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
+  { title: 'Total Users', value: 1834, icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10', trend: '+12%' },
+  { title: 'Total Admins', value: 5, icon: Shield, color: 'text-purple-500', bg: 'bg-purple-500/10', trend: '+12%' },
+  { title: 'Suspended Users', value: 12, icon: AlertTriangle, color: 'text-red-500', bg: 'bg-red-500/10', trend: '-12%' },
+  { title: 'Active Bookings', value: 892, icon: BookOpen, color: 'text-green-500', bg: 'bg-green-500/10', trend: '+12%' },
+  { title: 'Total Revenue', value: 284500, icon: DollarSign, color: 'text-gold', bg: 'bg-yellow-500/10', trend: '+12%' },
+  { title: 'Fleet Size', value: 156, icon: Car, color: 'text-cyan-500', bg: 'bg-cyan-500/10', trend: '+12%' },
 ];
 
 const monthlyRevenue = [
@@ -36,6 +37,14 @@ const bookingsByType = [
   { type: 'Luxury', count: 42 },
 ];
 
+const topBookers = [
+  { name: 'Jane Smith', bookings: 24, spent: 8540, initials: 'JS' },
+  { name: 'Mike Johnson', bookings: 19, spent: 6780, initials: 'MJ' },
+  { name: 'Sarah Wilson', bookings: 16, spent: 5920, initials: 'SW' },
+  { name: 'Alex Brown', bookings: 14, spent: 4850, initials: 'AB' },
+  { name: 'Lisa Green', bookings: 12, spent: 4200, initials: 'LG' },
+];
+
 const SuperAdminDashboard = () => {
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -58,13 +67,18 @@ const SuperAdminDashboard = () => {
                 <div className="text-2xl sm:text-3xl font-bold">
                   {stat.title === 'Total Revenue' ? '$' : ''}<AnimatedCounter end={stat.value} />
                 </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  <span className={stat.trend.startsWith('+') ? 'text-green-500' : 'text-red-500'}>
+                    {stat.trend.startsWith('+') ? '↑' : '↓'} {stat.trend}
+                  </span> from last month
+                </p>
               </CardContent>
             </Card>
           </motion.div>
         ))}
       </div>
 
-      {/* Monthly Revenue (moved from admin) */}
+      {/* Monthly Revenue */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-2">
           <Card className="glass-card">
@@ -113,7 +127,7 @@ const SuperAdminDashboard = () => {
         </motion.div>
       </div>
 
-      {/* Performance Metrics (moved from admin) */}
+      {/* Performance Metrics */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
         <Card className="glass-card">
           <CardHeader>
@@ -139,22 +153,58 @@ const SuperAdminDashboard = () => {
         </Card>
       </motion.div>
 
-      <Card className="glass-card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Car className="h-5 w-5 text-primary" /> Bookings by Car Type</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={bookingsByType}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="type" stroke="hsl(var(--muted-foreground))" />
-              <YAxis stroke="hsl(var(--muted-foreground))" />
-              <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
-              <Bar dataKey="count" fill="hsl(43 96% 56%)" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+      {/* Top 5 Users & Bookings by Type */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
+          <Card className="glass-card h-full">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Trophy className="h-5 w-5 text-star-gold" /> Top 5 Bookers</CardTitle>
+              <CardDescription>Users with the most bookings</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {topBookers.map((user, i) => (
+                  <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 transition-all">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-gold text-foreground font-bold text-sm">
+                      {i + 1}
+                    </div>
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback className="bg-primary/20 text-primary font-semibold">{user.initials}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm truncate">{user.name}</p>
+                      <p className="text-xs text-muted-foreground">{user.bookings} bookings</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-gold text-sm">${user.spent.toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground">total spent</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}>
+          <Card className="glass-card h-full">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Car className="h-5 w-5 text-primary" /> Bookings by Car Type</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={bookingsByType}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="type" stroke="hsl(var(--muted-foreground))" />
+                  <YAxis stroke="hsl(var(--muted-foreground))" />
+                  <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
+                  <Bar dataKey="count" fill="hsl(43 96% 56%)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Car, Users, BookOpen, DollarSign } from 'lucide-react';
+import { Car, Users, BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import {
@@ -8,7 +8,6 @@ import {
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const stats = [
-  { title: 'Total Revenue', value: 45231, icon: DollarSign, prefix: '$', color: 'text-green-500', bg: 'bg-green-500/10' },
   { title: 'Total Cars', value: 127, icon: Car, color: 'text-blue-500', bg: 'bg-blue-500/10' },
   { title: 'Active Users', value: 1834, icon: Users, color: 'text-purple-500', bg: 'bg-purple-500/10' },
   { title: 'Bookings', value: 892, icon: BookOpen, color: 'text-orange-500', bg: 'bg-orange-500/10' },
@@ -45,7 +44,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
         {stats.map((stat, index) => (
           <motion.div key={stat.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }}>
             <Card className="glass-card hover-glow border-border/50 hover:border-primary/30 transition-all">
@@ -57,7 +56,7 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl sm:text-3xl font-bold">
-                  <AnimatedCounter end={stat.value} prefix={stat.prefix} />
+                  <AnimatedCounter end={stat.value} />
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
                   <span className="text-green-500">↑ 12%</span> from last month
@@ -70,7 +69,6 @@ const Dashboard = () => {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Booking Status Bar Chart */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-2">
           <Card className="glass-card">
             <CardHeader>
@@ -96,7 +94,6 @@ const Dashboard = () => {
           </Card>
         </motion.div>
 
-        {/* Pie Chart */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
           <Card className="glass-card h-full">
             <CardHeader>

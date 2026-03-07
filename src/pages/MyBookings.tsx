@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, MapPin, Car, DollarSign, Clock, AlertTriangle, RefreshCw, Eye } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -42,6 +41,15 @@ const initialBookings: BookingItem[] = [
   { id: 3, car: 'Porsche 911', carId: '3', pickupDate: '2026-01-10', returnDate: '2026-01-13', location: 'Bahir Dar - City Center', baseCost: 897, penaltyAmount: 0, penaltyPaid: false, status: 'completed', carTaken: true, carDelivered: true, carProblem: false, refundAmount: 0, refundStatus: 'none' },
   { id: 4, car: 'Mercedes C-Class', carId: '4', pickupDate: '2026-02-01', returnDate: '2026-02-05', location: 'Dire Dawa - Airport', baseCost: 380, penaltyAmount: 38, penaltyPaid: false, status: 'cancelled', carTaken: false, carDelivered: false, carProblem: false, refundAmount: 342, refundStatus: 'refunded' },
   { id: 5, car: 'Audi Q7', carId: '5', pickupDate: '2026-02-15', returnDate: '2026-02-18', location: 'Adama - Downtown', baseCost: 345, penaltyAmount: 0, penaltyPaid: false, status: 'failed', carTaken: false, carDelivered: false, carProblem: true, refundAmount: 345, refundStatus: 'refunded' },
+];
+
+const statusTabs = [
+  { value: 'all', label: 'All' },
+  { value: 'upcoming', label: 'Upcoming' },
+  { value: 'active', label: 'Active' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
+  { value: 'overdue', label: 'Overdue' },
 ];
 
 const MyBookings = () => {
@@ -137,32 +145,22 @@ const MyBookings = () => {
   const handlePayPenalty = (booking: BookingItem) => {
     toast({ title: 'Redirecting to Chapa Payment 💳', description: `Processing penalty payment of $${booking.penaltyAmount} for ${booking.car}...` });
     setTimeout(() => {
-      setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, penaltyPaid: true } : b));
+      const isAdminPenalty = ['damage', 'fuel_empty', 'dirty_return'].includes(booking.penaltyType || '');
+      setBookings(prev => prev.map(b => b.id === booking.id ? {
+        ...b,
+        penaltyPaid: true,
+        // Admin penalty → auto-complete; System overdue → wait for admin
+        ...(isAdminPenalty ? { status: 'completed' as BookingStatus } : {}),
+      } : b));
       addNotification({ title: 'Penalty Paid', message: `Your penalty of $${booking.penaltyAmount} for ${booking.car} has been paid successfully.`, type: 'success' });
       toast({ title: 'Penalty Paid! ✅', description: `$${booking.penaltyAmount} penalty for ${booking.car} has been paid.` });
     }, 2000);
   };
 
-  // Active: early return → refund (minus penalty if any)
-  const handleEarlyReturn = (booking: BookingItem) => {
-    const now = new Date();
-    const endDate = new Date(booking.returnDate);
-    const daysRemaining = Math.ceil((endDate.getTime() - now.getTime()) / 86400000);
-    const totalDays = Math.ceil((endDate.getTime() - new Date(booking.pickupDate).getTime()) / 86400000);
-    const dailyRate = booking.baseCost / totalDays;
-    const refundBase = Math.round(daysRemaining * dailyRate);
-    const finalRefund = booking.penaltyAmount > 0 ? Math.max(0, refundBase - booking.penaltyAmount) : refundBase;
-
-    setBookings(prev => prev.map(b => b.id === booking.id ? {
-      ...b, status: 'completed' as BookingStatus, refundAmount: finalRefund, refundStatus: 'processing' as const,
-    } : b));
-    addNotification({ title: 'Early Return', message: `Car ${booking.car} returned early. Refund of $${finalRefund} is being processed.`, type: 'success' });
-    toast({ title: 'Car Returned Early', description: `Refund of $${finalRefund} being processed.` });
-  };
-
-  // Show pay penalty only for: overdue, or active with damage/fuel/dirty penalties
+  // Show pay penalty only for: overdue, or active with damage/fuel/dirty penalties (not for completed)
   const showPayPenalty = (booking: BookingItem) => {
     if (booking.penaltyPaid || booking.penaltyAmount <= 0) return false;
+    if (booking.status === 'completed') return false;
     if (booking.status === 'overdue') return true;
     if (booking.status === 'active' && ['damage', 'fuel_empty', 'dirty_return'].includes(booking.penaltyType || '')) return true;
     return false;
@@ -237,13 +235,13 @@ const MyBookings = () => {
                 </div>
               </div>
               <div className="flex flex-wrap gap-2 pt-2">
-                {/* View Details - all statuses */}
+                {/* View Details */}
                 <Button variant="default" size="sm" className="bg-gradient-gold hover:shadow-glow text-foreground"
                   onClick={() => { setSelectedBooking(booking); setDialogOpen(true); }}>
                   <Eye className="w-3 h-3 mr-1" /> View Details
                 </Button>
 
-                {/* Cancel for upcoming/confirmed - immediate refund */}
+                {/* Cancel for upcoming/confirmed */}
                 {(booking.status === 'upcoming' || booking.status === 'confirmed') && (
                   <Button size="sm" className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     onClick={() => handleCancelBooking(booking)}>
@@ -252,12 +250,12 @@ const MyBookings = () => {
                 )}
 
                 {/* Book Again for all statuses */}
-                <Button variant="outline" size="sm" className="border-green-500 text-green-500 hover:bg-green-500 hover:text-white transition-colors"
+                <Button variant="outline" size="sm" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
                   onClick={() => handleBookAgain(booking)}>
                   <RefreshCw className="w-3 h-3 mr-1" /> Book Again
                 </Button>
 
-                {/* Pay Penalty - overdue or active with damage/fuel/dirty */}
+                {/* Pay Penalty - not for completed */}
                 {showPayPenalty(booking) && (
                   <Button variant="destructive" size="sm" className="flex items-center gap-1"
                     onClick={() => handlePayPenalty(booking)}>
@@ -303,33 +301,37 @@ const MyBookings = () => {
       </div>
 
       <div className="container mx-auto px-4 py-8 sm:py-12">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 sm:space-y-8">
-          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-            <TabsList className="inline-flex w-auto min-w-max sm:grid sm:w-full sm:max-w-3xl sm:mx-auto sm:grid-cols-6 glass-card p-1 sm:p-2">
-              <TabsTrigger value="all" className="data-[state=active]:bg-gradient-gold text-xs sm:text-sm px-3 sm:px-4">All</TabsTrigger>
-              <TabsTrigger value="upcoming" className="data-[state=active]:bg-gradient-gold text-xs sm:text-sm px-3 sm:px-4">Upcoming</TabsTrigger>
-              <TabsTrigger value="active" className="data-[state=active]:bg-gradient-gold text-xs sm:text-sm px-3 sm:px-4">Active</TabsTrigger>
-              <TabsTrigger value="completed" className="data-[state=active]:bg-gradient-gold text-xs sm:text-sm px-3 sm:px-4">Completed</TabsTrigger>
-              <TabsTrigger value="cancelled" className="data-[state=active]:bg-gradient-gold text-xs sm:text-sm px-3 sm:px-4">Cancelled</TabsTrigger>
-              <TabsTrigger value="overdue" className="data-[state=active]:bg-gradient-gold text-xs sm:text-sm px-3 sm:px-4">Overdue</TabsTrigger>
-            </TabsList>
-          </div>
-          {['all', 'upcoming', 'active', 'completed', 'cancelled', 'overdue'].map(tab => (
-            <TabsContent key={tab} value={tab} className="space-y-6">
-              <AnimatePresence>
-                {filterBookings(tab).map((booking) => (
-                  <BookingCard key={booking.id} booking={booking} />
-                ))}
-              </AnimatePresence>
-              {filterBookings(tab).length === 0 && (
-                <div className="text-center py-16">
-                  <Car className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-                  <p className="text-muted-foreground">No {tab === 'all' ? '' : tab} bookings found</p>
-                </div>
-              )}
-            </TabsContent>
+        {/* Responsive filter tabs - wrap instead of scroll */}
+        <div className="flex flex-wrap gap-2 mb-6 sm:mb-8">
+          {statusTabs.map(tab => (
+            <button
+              key={tab.value}
+              onClick={() => setActiveTab(tab.value)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                activeTab === tab.value
+                  ? 'bg-gradient-gold text-foreground shadow-glow'
+                  : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/50'
+              }`}
+            >
+              {tab.label}
+              <span className="ml-1.5 text-xs opacity-70">({filterBookings(tab.value).length})</span>
+            </button>
           ))}
-        </Tabs>
+        </div>
+
+        <div className="space-y-6">
+          <AnimatePresence>
+            {filterBookings(activeTab).map((booking) => (
+              <BookingCard key={booking.id} booking={booking} />
+            ))}
+          </AnimatePresence>
+          {filterBookings(activeTab).length === 0 && (
+            <div className="text-center py-16">
+              <Car className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+              <p className="text-muted-foreground">No {activeTab === 'all' ? '' : activeTab} bookings found</p>
+            </div>
+          )}
+        </div>
 
         <BookingDetailsDialog booking={selectedBooking} open={dialogOpen} onOpenChange={setDialogOpen} />
 
