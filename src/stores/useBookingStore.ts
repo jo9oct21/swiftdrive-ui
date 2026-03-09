@@ -39,6 +39,7 @@ interface BookingStore {
   bookings: BookingItem[];
   
   // Mutations
+  addBooking: (data: { car: string; carId: string; user: string; userEmail: string; pickupDate: string; returnDate: string; location: string; baseCost: number }) => void;
   updateBookingStatus: (id: number, status: BookingStatus) => void;
   cancelBooking: (id: number) => void;
   payPenalty: (id: number) => void;
