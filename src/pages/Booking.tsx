@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications } from '@/contexts/NotificationContext';
+import { useBookingStore } from '@/stores/useBookingStore';
 
 const BRANCH_LOCATIONS = [
   'Addis Ababa - Bole',
@@ -22,18 +23,13 @@ const BRANCH_LOCATIONS = [
   'Mekelle - Main Branch',
 ];
 
-// Simulated booked date ranges for demo (existing rentals for this car)
-const BOOKED_RANGES = [
-  { start: '2026-03-20', end: '2026-03-25' },
-  { start: '2026-04-05', end: '2026-04-10' },
-];
-
 const Booking = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isAuthenticated, user } = useAuth();
   const { addNotification } = useNotifications();
+  const { bookings, addBooking } = useBookingStore();
   const car = location.state?.car;
   const startFromDate = location.state?.startFromDate;
 
@@ -50,20 +46,21 @@ const Booking = () => {
   const today = new Date().toISOString().split('T')[0];
   const minPickupDate = startFromDate || today;
 
-  // Calculate max date: if car has future bookings, max is the start of the next booked range
-  // Otherwise unlimited (90 days)
+  // Get booked ranges for this car from the store
+  const bookedRanges = car ? bookings
+    .filter(b => b.carId === car.id && !['cancelled', 'failed', 'completed'].includes(b.status))
+    .map(b => ({ start: b.pickupDate, end: b.returnDate })) : [];
+
   const getMaxDate = () => {
-    const futureBookings = BOOKED_RANGES
+    const futureBookings = bookedRanges
       .filter(r => new Date(r.start) > new Date(minPickupDate))
       .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
 
     if (futureBookings.length > 0) {
-      // Max is 1 day before the next booking starts
       const nextBookingStart = new Date(futureBookings[0].start);
       nextBookingStart.setDate(nextBookingStart.getDate() - 1);
       return nextBookingStart.toISOString().split('T')[0];
     }
-    // No future bookings: 90 days ahead
     return new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0];
   };
 
@@ -78,15 +75,14 @@ const Booking = () => {
 
   const isDateInBookedRange = (dateStr: string) => {
     const date = new Date(dateStr);
-    return BOOKED_RANGES.some(r => date >= new Date(r.start) && date <= new Date(r.end));
+    return bookedRanges.some(r => date >= new Date(r.start) && date <= new Date(r.end));
   };
 
   const calculateDays = () => {
     if (!formData.pickupDate || !formData.returnDate) return 0;
     const pickup = new Date(formData.pickupDate);
     const returnDate = new Date(formData.returnDate);
-    const diffTime = Math.abs(returnDate.getTime() - pickup.getTime());
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 0;
+    return Math.ceil(Math.abs(returnDate.getTime() - pickup.getTime()) / 86400000) || 0;
   };
 
   const totalDays = calculateDays();
@@ -95,7 +91,7 @@ const Booking = () => {
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     if (isDateInBookedRange(value)) {
-      toast({ title: 'Date Unavailable', description: 'This date falls within an existing rental period. Please choose another.', variant: 'destructive' });
+      toast({ title: 'Date Unavailable', description: 'This date falls within an existing rental period.', variant: 'destructive' });
       return;
     }
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -107,20 +103,27 @@ const Booking = () => {
       toast({ title: 'Error', description: 'Please select a car first', variant: 'destructive' });
       return;
     }
-
     const storedPhone = localStorage.getItem('user_phone');
     if (!storedPhone) {
       setPhoneDialogOpen(true);
       return;
     }
-
     proceedToPayment();
   };
 
   const proceedToPayment = () => {
-    toast({
-      title: 'Redirecting to Chapa Payment 💳',
-      description: `Processing payment of $${totalPrice} for ${car.name}...`,
+    toast({ title: 'Redirecting to Chapa Payment 💳', description: `Processing payment of $${totalPrice} for ${car.name}...` });
+
+    // Add booking to Zustand store
+    addBooking({
+      car: car.name,
+      carId: car.id,
+      user: user?.name || 'Unknown',
+      userEmail: user?.email || '',
+      pickupDate: formData.pickupDate,
+      returnDate: formData.returnDate,
+      location: formData.pickupLocation,
+      baseCost: totalPrice,
     });
 
     addNotification({
@@ -223,20 +226,17 @@ const Booking = () => {
                     </div>
                   </div>
 
-                  {BOOKED_RANGES.length > 0 && (
+                  {bookedRanges.length > 0 && (
                     <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-xl">
                       <p className="text-sm font-medium text-yellow-600 dark:text-yellow-400 mb-2">⚠️ Unavailable Date Ranges:</p>
                       <div className="space-y-1">
-                        {BOOKED_RANGES.filter(r => new Date(r.end) >= new Date(today)).map((r, i) => (
-                          <p key={i} className="text-xs text-muted-foreground">
-                            {r.start} → {r.end}
-                          </p>
+                        {bookedRanges.filter(r => new Date(r.end) >= new Date(today)).map((r, i) => (
+                          <p key={i} className="text-xs text-muted-foreground">{r.start} → {r.end}</p>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  {/* Payment via Chapa */}
                   <div className="space-y-4">
                     <h3 className="font-semibold text-lg flex items-center gap-2">
                       <CreditCard className="h-5 w-5 text-primary" /> Payment Method
@@ -250,7 +250,7 @@ const Booking = () => {
                     </div>
                   </div>
 
-                  <Button type="submit" size="lg" className="w-full bg-gradient-gold hover:shadow-glow text-foreground font-semibold"
+                  <Button type="submit" size="lg" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
                     disabled={!formData.pickupLocation || !formData.returnLocation}>
                     Confirm Booking — ${totalPrice}
                   </Button>
@@ -259,7 +259,6 @@ const Booking = () => {
             </Card>
           </div>
 
-          {/* Booking Summary */}
           <div className="lg:col-span-1">
             <Card className="sticky top-20">
               <CardHeader>
@@ -293,7 +292,6 @@ const Booking = () => {
         </div>
       </div>
 
-      {/* Phone Number Dialog */}
       <Dialog open={phoneDialogOpen} onOpenChange={setPhoneDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -310,7 +308,7 @@ const Booking = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setPhoneDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handlePhoneSubmit} className="bg-gradient-gold text-foreground">Continue to Payment</Button>
+            <Button onClick={handlePhoneSubmit} className="bg-primary text-primary-foreground">Continue to Payment</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

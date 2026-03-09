@@ -39,6 +39,7 @@ interface BookingStore {
   bookings: BookingItem[];
   
   // Mutations
+  addBooking: (data: { car: string; carId: string; user: string; userEmail: string; pickupDate: string; returnDate: string; location: string; baseCost: number }) => void;
   updateBookingStatus: (id: number, status: BookingStatus) => void;
   cancelBooking: (id: number) => void;
   payPenalty: (id: number) => void;
@@ -57,6 +58,32 @@ interface BookingStore {
 
 export const useBookingStore = create<BookingStore>((set, get) => ({
   bookings: initialBookings,
+
+  addBooking: (data) => {
+    set(state => {
+      const maxId = state.bookings.reduce((max, b) => Math.max(max, b.id), 0);
+      const newBooking: BookingItem = {
+        id: maxId + 1,
+        car: data.car,
+        carId: data.carId,
+        user: data.user,
+        userEmail: data.userEmail,
+        pickupDate: data.pickupDate,
+        returnDate: data.returnDate,
+        location: data.location,
+        baseCost: data.baseCost,
+        penaltyAmount: 0,
+        penaltyPaid: false,
+        status: 'upcoming',
+        carTaken: false,
+        carDelivered: false,
+        carProblem: false,
+        refundAmount: 0,
+        refundStatus: 'none',
+      };
+      return { bookings: [...state.bookings, newBooking] };
+    });
+  },
 
   updateBookingStatus: (id, status) => {
     set(state => ({
