@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Calendar, Filter, X, AlertTriangle } from 'lucide-react';
+import { Search, Calendar, Filter, X, AlertTriangle, CheckCircle, XCircle, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +24,7 @@ import { format } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useNotifications } from '@/contexts/NotificationContext';
+import { useBookingStore } from '@/stores/useBookingStore';
 
 const penaltyTypes = [
   { id: 'damage', label: 'Vehicle Damage', amount: 200 },
@@ -31,66 +32,83 @@ const penaltyTypes = [
   { id: 'dirty_return', label: 'Dirty Vehicle', amount: 25 },
 ];
 
-const demoBookings = [
-  { id: 1, user: 'John Doe', car: 'Tesla Model 3', startDate: '2025-10-22', endDate: '2025-10-25', baseCost: 267, penaltyAmount: 0, penaltyPaid: false, status: 'Active', penalty: null as string | null },
-  { id: 2, user: 'Jane Smith', car: 'BMW X5', startDate: '2025-10-23', endDate: '2025-10-27', baseCost: 500, penaltyAmount: 0, penaltyPaid: false, status: 'Pending', penalty: null as string | null },
-  { id: 3, user: 'Mike Johnson', car: 'Porsche 911', startDate: '2025-10-20', endDate: '2025-10-22', baseCost: 548, penaltyAmount: 200, penaltyPaid: false, status: 'Completed', penalty: 'damage' },
-  { id: 4, user: 'Sarah Wilson', car: 'Mercedes C-Class', startDate: '2025-10-24', endDate: '2025-10-28', baseCost: 380, penaltyAmount: 0, penaltyPaid: false, status: 'Active', penalty: null as string | null },
-  { id: 5, user: 'Alex Brown', car: 'Audi Q7', startDate: '2025-10-26', endDate: '2025-10-30', baseCost: 460, penaltyAmount: 0, penaltyPaid: false, status: 'Upcoming', penalty: null as string | null },
-  { id: 6, user: 'Lisa Green', car: 'Toyota Camry', startDate: '2025-10-15', endDate: '2025-10-18', baseCost: 195, penaltyAmount: 50, penaltyPaid: false, status: 'Overdue', penalty: 'late_return' },
-];
-
 const ManageBookings = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [bookings, setBookings] = useState(demoBookings);
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
   const [penaltyDialogOpen, setPenaltyDialogOpen] = useState(false);
+  const [completeMethodDialogOpen, setCompleteMethodDialogOpen] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
   const [selectedPenalty, setSelectedPenalty] = useState('');
   const { addNotification } = useNotifications();
 
+  const {
+    bookings,
+    completeBooking,
+    completeByOtherMethod,
+    allowBooking,
+    rejectBooking,
+    applyAdminPenalty,
+    applyOverduePenalty,
+  } = useBookingStore();
+
   const handleCompleteBooking = (id: number) => {
     const booking = bookings.find(b => b.id === id);
     if (!booking) return;
-    if (booking.status === 'Overdue' && !booking.penaltyPaid) {
-      toast({ title: "Cannot Complete", description: "User must pay the penalty before completing this booking.", variant: 'destructive' });
+
+    // Overdue with unpaid penalty — can't complete normally
+    if (booking.status.toLowerCase() === 'overdue' && !booking.penaltyPaid) {
+      // Show option to complete by other method
+      setSelectedBookingId(id);
+      setCompleteMethodDialogOpen(true);
       return;
     }
-    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'Completed' } : b));
-    addNotification({ title: 'Booking Completed', message: `Your booking for ${booking.car} has been marked as completed.`, type: 'success' });
-    toast({ title: "Booking Completed", description: "The booking status has been updated to completed." });
+
+    const success = completeBooking(id);
+    if (success) {
+      addNotification({ title: 'Booking Completed', message: `Your booking for ${booking.car} has been marked as completed.`, type: 'success' });
+      toast({ title: "Booking Completed", description: "The booking status has been updated to completed." });
+    }
+  };
+
+  const handleCompleteByOtherMethod = () => {
+    if (!selectedBookingId) return;
+    const booking = bookings.find(b => b.id === selectedBookingId);
+    completeByOtherMethod(selectedBookingId);
+    addNotification({ title: 'Booking Completed', message: `Your booking for ${booking?.car} has been marked as completed. Penalty paid by other method.`, type: 'success' });
+    toast({ title: "Booking Completed", description: "Marked as completed with penalty paid by other method." });
+    setCompleteMethodDialogOpen(false);
   };
 
   const handleAllowBooking = (id: number) => {
-    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'Active' } : b));
     const booking = bookings.find(b => b.id === id);
-    addNotification({ title: 'Car Delivered', message: `The car ${booking?.car} has been delivered to ${booking?.user}. Rental is now active.`, type: 'success' });
+    allowBooking(id);
+    addNotification({ title: 'Car Delivered', message: `The car ${booking?.car} has been delivered. Rental is now active.`, type: 'success' });
     toast({ title: "Booking Activated", description: "Car delivered successfully. Booking is now active." });
   };
 
   const handleRejectBooking = (id: number) => {
     const booking = bookings.find(b => b.id === id);
     if (!booking) return;
-    const refund = booking.baseCost;
-    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'Failed', penaltyAmount: 0 } : b));
-    addNotification({ title: 'Booking Rejected', message: `Your booking for ${booking.car} was rejected. Full refund of $${refund} is being processed.`, type: 'warning' });
-    toast({ title: "Booking Rejected", description: `Full refund of $${refund} being processed for ${booking.user}.` });
+    rejectBooking(id);
+    addNotification({ title: 'Booking Rejected', message: `Your booking for ${booking.car} was rejected. Full refund of $${booking.baseCost} is being processed.`, type: 'warning' });
+    toast({ title: "Booking Rejected", description: `Full refund of $${booking.baseCost} being processed for ${booking.user}.` });
   };
 
   const handleAddPenalty = () => {
     if (!selectedBookingId || !selectedPenalty) return;
     const penalty = penaltyTypes.find(p => p.id === selectedPenalty);
     const booking = bookings.find(b => b.id === selectedBookingId);
-    setBookings(prev => prev.map(b =>
-      b.id === selectedBookingId ? { ...b, penalty: selectedPenalty, penaltyAmount: penalty?.amount || 0 } : b
-    ));
+    if (!penalty || !booking) return;
+
+    applyAdminPenalty(selectedBookingId, selectedPenalty, penalty.amount);
+
     addNotification({
-      title: `Penalty Applied: ${penalty?.label}`,
-      message: `A ${penalty?.label} penalty of $${penalty?.amount} has been applied to your booking for ${booking?.car}. Total: $${(booking?.baseCost || 0) + (penalty?.amount || 0)}`,
+      title: `Penalty Applied: ${penalty.label}`,
+      message: `A ${penalty.label} penalty of $${penalty.amount} has been applied to your booking for ${booking.car}. Total: $${booking.baseCost + penalty.amount}`,
       type: 'penalty',
     });
-    toast({ title: "Penalty Applied", description: `${penalty?.label} penalty of $${penalty?.amount} has been added and user notified.` });
+    toast({ title: "Penalty Applied", description: `${penalty.label} penalty of $${penalty.amount} has been added and user notified.` });
     setPenaltyDialogOpen(false);
     setSelectedPenalty('');
   };
@@ -98,29 +116,45 @@ const ManageBookings = () => {
   const handleAddOverduePenalty = (id: number) => {
     const booking = bookings.find(b => b.id === id);
     if (!booking) return;
+    applyOverduePenalty(id);
+
     const now = new Date();
-    const endDate = new Date(booking.endDate);
+    const endDate = new Date(booking.returnDate);
     const daysLate = Math.max(1, Math.ceil((now.getTime() - endDate.getTime()) / 86400000));
-    const penaltyPerDay = 50;
-    const totalPenalty = daysLate * penaltyPerDay;
-    setBookings(prev => prev.map(b => b.id === id ? { ...b, penaltyAmount: totalPenalty, penalty: 'late_return' } : b));
+    const totalPenalty = daysLate * 50;
+
     addNotification({
       title: 'Overdue Penalty Updated',
-      message: `Your overdue penalty for ${booking.car} is now $${totalPenalty} (${daysLate} days × $${penaltyPerDay}/day).`,
+      message: `Your overdue penalty for ${booking.car} is now $${totalPenalty} (${daysLate} days × $50/day).`,
       type: 'penalty',
     });
     toast({ title: "Penalty Updated", description: `Overdue penalty set to $${totalPenalty} for ${daysLate} late days.` });
   };
 
+  const getStatusBadge = (status: string) => {
+    const s = status.toLowerCase();
+    const styles: Record<string, string> = {
+      active: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30',
+      pending: 'bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/30',
+      upcoming: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30',
+      overdue: 'bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-500/30',
+      failed: 'bg-orange-500/15 text-orange-700 dark:text-orange-400 border-orange-500/30',
+      cancelled: 'bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-500/30',
+      completed: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30',
+    };
+    return styles[s] || 'bg-muted text-muted-foreground';
+  };
+
   const filteredBookings = bookings.filter((booking) => {
+    const statusStr = booking.status.toLowerCase();
     const matchesSearch =
       booking.user.toLowerCase().includes(search.toLowerCase()) ||
       booking.car.toLowerCase().includes(search.toLowerCase()) ||
-      booking.status.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = !statusFilter || booking.status === statusFilter;
+      statusStr.includes(search.toLowerCase());
+    const matchesStatus = !statusFilter || statusStr === statusFilter.toLowerCase();
     const matchesDateRange =
-      (!dateRange.from || new Date(booking.startDate) >= dateRange.from) &&
-      (!dateRange.to || new Date(booking.endDate) <= dateRange.to);
+      (!dateRange.from || new Date(booking.pickupDate) >= dateRange.from) &&
+      (!dateRange.to || new Date(booking.returnDate) <= dateRange.to);
     return matchesSearch && matchesStatus && matchesDateRange;
   });
 
@@ -145,13 +179,9 @@ const ManageBookings = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => setStatusFilter('Active')}>Active</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setStatusFilter('Upcoming')}>Upcoming</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setStatusFilter('Completed')}>Completed</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setStatusFilter('Pending')}>Pending</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setStatusFilter('Overdue')}>Overdue</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setStatusFilter('Failed')}>Failed</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setStatusFilter('Cancelled')}>Cancelled</DropdownMenuItem>
+              {['Active', 'Upcoming', 'Completed', 'Pending', 'Overdue', 'Failed', 'Cancelled'].map(s => (
+                <DropdownMenuItem key={s} onClick={() => setStatusFilter(s)}>{s}</DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
           
@@ -180,10 +210,10 @@ const ManageBookings = () => {
         <Input placeholder="Search by user, car name or status..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
       </div>
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-lg overflow-x-auto">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="border-border">
               <TableHead>ID</TableHead>
               <TableHead>User</TableHead>
               <TableHead>Car</TableHead>
@@ -198,74 +228,80 @@ const ManageBookings = () => {
           </TableHeader>
           <TableBody>
             {filteredBookings.map((booking) => (
-              <TableRow key={booking.id}>
-                <TableCell className="font-medium">#{booking.id}</TableCell>
-                <TableCell>{booking.user}</TableCell>
-                <TableCell>{booking.car}</TableCell>
-                <TableCell className="hidden sm:table-cell">{booking.startDate}</TableCell>
-                <TableCell className="hidden sm:table-cell">{booking.endDate}</TableCell>
-                <TableCell className="hidden md:table-cell font-medium">${booking.baseCost}</TableCell>
+              <TableRow key={booking.id} className="border-border hover:bg-muted/50">
+                <TableCell className="font-medium text-foreground">#{booking.id}</TableCell>
+                <TableCell className="text-foreground">{booking.user}</TableCell>
+                <TableCell className="text-foreground">{booking.car}</TableCell>
+                <TableCell className="hidden sm:table-cell text-foreground">{booking.pickupDate}</TableCell>
+                <TableCell className="hidden sm:table-cell text-foreground">{booking.returnDate}</TableCell>
+                <TableCell className="hidden md:table-cell font-medium text-foreground">${booking.baseCost}</TableCell>
                 <TableCell className="hidden md:table-cell">
                   {booking.penaltyAmount > 0 ? (
-                    <span className="text-destructive font-bold">
+                    <span className="text-rose-600 dark:text-rose-400 font-bold">
                       +${booking.penaltyAmount}
-                      <span className="block text-xs font-normal">
-                        {penaltyTypes.find(p => p.id === booking.penalty)?.label || (booking.penalty === 'late_return' ? 'Late Return (auto)' : '')}
+                      {booking.penaltyPaid && <span className="text-emerald-600 dark:text-emerald-400 text-xs ml-1">✅</span>}
+                      <span className="block text-xs font-normal text-muted-foreground">
+                        {penaltyTypes.find(p => p.id === booking.penaltyType)?.label || (booking.penaltyType === 'late_return' ? 'Late Return (auto)' : '')}
                       </span>
                     </span>
                   ) : (
                     <span className="text-xs text-muted-foreground">None</span>
                   )}
                 </TableCell>
-                <TableCell className="font-bold">${booking.baseCost + booking.penaltyAmount}</TableCell>
+                <TableCell className="font-bold text-foreground">${booking.baseCost + booking.penaltyAmount}</TableCell>
                 <TableCell>
-                  <span className={`px-2 py-1 rounded-full text-xs whitespace-nowrap ${
-                    booking.status === 'Active' ? 'bg-green-500/20 text-green-500'
-                    : booking.status === 'Pending' ? 'bg-yellow-500/20 text-yellow-500'
-                    : booking.status === 'Upcoming' ? 'bg-blue-500/20 text-blue-500'
-                    : booking.status === 'Overdue' ? 'bg-red-600/20 text-red-600'
-                    : booking.status === 'Failed' ? 'bg-orange-500/20 text-orange-500'
-                    : booking.status === 'Cancelled' ? 'bg-red-500/20 text-red-500'
-                    : 'bg-emerald-500/20 text-emerald-500'
-                  }`}>
-                    {booking.status}
-                  </span>
+                  <Badge variant="outline" className={cn('text-xs', getStatusBadge(booking.status))}>
+                    {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                  </Badge>
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
-                    {booking.status === 'Active' && (
-                      <Button size="sm" variant="outline" onClick={() => handleCompleteBooking(booking.id)}>
-                        Complete
-                      </Button>
-                    )}
-                    {booking.status === 'Overdue' && (
+                    {booking.status === 'active' && (
                       <>
-                        <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive hover:text-white transition-colors"
+                        <Button size="sm" variant="outline" className="text-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
+                          onClick={() => handleCompleteBooking(booking.id)}>
+                          <CheckCircle className="h-3 w-3 mr-1" /> Complete
+                        </Button>
+                        {!booking.penaltyType && (
+                          <Button size="sm" variant="outline" className="text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-600 hover:text-white transition-colors"
+                            onClick={() => { setSelectedBookingId(booking.id); setPenaltyDialogOpen(true); }}>
+                            <AlertTriangle className="h-3 w-3 mr-1" /> Penalty
+                          </Button>
+                        )}
+                      </>
+                    )}
+                    {booking.status === 'overdue' && (
+                      <>
+                        <Button size="sm" variant="outline" className="text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-600 hover:text-white transition-colors"
                           onClick={() => handleAddOverduePenalty(booking.id)}>
-                          <AlertTriangle className="h-3 w-3 mr-1" /> Penalty
+                          <DollarSign className="h-3 w-3 mr-1" /> Update Penalty
                         </Button>
                         <Button size="sm" variant="outline"
-                          className={!booking.penaltyPaid ? 'opacity-50 cursor-not-allowed' : ''}
-                          onClick={() => handleCompleteBooking(booking.id)}
-                          disabled={!booking.penaltyPaid}>
-                          Complete
+                          className={cn(
+                            'transition-colors',
+                            !booking.penaltyPaid 
+                              ? 'opacity-40 cursor-not-allowed text-muted-foreground' 
+                              : 'text-foreground hover:bg-primary hover:text-primary-foreground'
+                          )}
+                          onClick={() => handleCompleteBooking(booking.id)}>
+                          <CheckCircle className="h-3 w-3 mr-1" /> Complete
                         </Button>
                       </>
                     )}
-                    {booking.status === 'Upcoming' && (
+                    {booking.status === 'upcoming' && (
                       <>
-                        <Button size="sm" variant="outline" className="text-green-500 border-green-500/30 hover:bg-green-500 hover:text-white transition-colors"
+                        <Button size="sm" variant="outline" className="text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-600 hover:text-white transition-colors"
                           onClick={() => handleAllowBooking(booking.id)}>
-                          Allow
+                          <CheckCircle className="h-3 w-3 mr-1" /> Allow
                         </Button>
-                        <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive hover:text-white transition-colors"
+                        <Button size="sm" variant="outline" className="text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-600 hover:text-white transition-colors"
                           onClick={() => handleRejectBooking(booking.id)}>
-                          Reject
+                          <XCircle className="h-3 w-3 mr-1" /> Reject
                         </Button>
                       </>
                     )}
-                    {!booking.penalty && (booking.status === 'Active' || booking.status === 'Completed') && (
-                      <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive hover:text-white transition-colors"
+                    {!booking.penaltyType && booking.status === 'completed' && (
+                      <Button size="sm" variant="outline" className="text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-600 hover:text-white transition-colors"
                         onClick={() => { setSelectedBookingId(booking.id); setPenaltyDialogOpen(true); }}>
                         <AlertTriangle className="h-3 w-3 mr-1" /> Penalty
                       </Button>
@@ -278,15 +314,16 @@ const ManageBookings = () => {
         </Table>
       </motion.div>
 
+      {/* Penalty Dialog */}
       <Dialog open={penaltyDialogOpen} onOpenChange={setPenaltyDialogOpen}>
-        <DialogContent>
+        <DialogContent className="bg-card border-border">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" /> Apply Penalty
+            <DialogTitle className="flex items-center gap-2 text-foreground">
+              <AlertTriangle className="h-5 w-5 text-rose-600 dark:text-rose-400" /> Apply Penalty
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">Select the type of penalty to apply. The user will be notified.</p>
+            <p className="text-sm text-muted-foreground">Select the type of penalty to apply. The user will be notified and must pay before completion.</p>
             <Select value={selectedPenalty} onValueChange={setSelectedPenalty}>
               <SelectTrigger><SelectValue placeholder="Select penalty type" /></SelectTrigger>
               <SelectContent>
@@ -298,7 +335,27 @@ const ManageBookings = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setPenaltyDialogOpen(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={handleAddPenalty} disabled={!selectedPenalty}>Apply Penalty</Button>
+            <Button className="bg-rose-600 hover:bg-rose-700 text-white" onClick={handleAddPenalty} disabled={!selectedPenalty}>Apply Penalty</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Complete By Other Method Dialog */}
+      <Dialog open={completeMethodDialogOpen} onOpenChange={setCompleteMethodDialogOpen}>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Complete Overdue Booking</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              This booking has an unpaid penalty. You can mark it as completed with the note that penalty was paid by another method (cash, bank transfer, etc.).
+            </p>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setCompleteMethodDialogOpen(false)}>Cancel</Button>
+            <Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleCompleteByOtherMethod}>
+              Complete (Paid by Other Method)
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
