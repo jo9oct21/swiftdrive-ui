@@ -36,7 +36,7 @@ const MyBookings = () => {
   const { theme } = useTheme();
   const { addNotification } = useNotifications();
 
-  const { getBookingsForUser, cancelBooking, payPenalty, runStateMachine } = useBookingStore();
+  const { getBookingsForUser, cancelBooking, payPenalty, runStateMachine, getOverduePenalty } = useBookingStore();
   const { cars } = useCarStore();
 
   const bookings = getBookingsForUser(user?.email || '');
@@ -51,9 +51,26 @@ const MyBookings = () => {
   // Run state machine on mount and every 60s
   useEffect(() => {
     runStateMachine();
-    const interval = setInterval(runStateMachine, 60000);
+    const interval = setInterval(runStateMachine, 30000);
     return () => clearInterval(interval);
   }, [runStateMachine]);
+
+  // Send daily overdue notifications
+  useEffect(() => {
+    const overdueBookings = bookings.filter(b => b.status === 'overdue' && !b.penaltyPaid);
+    overdueBookings.forEach(b => {
+      const { days, amount } = getOverduePenalty(b);
+      const notifKey = `overdue_notif_${b.id}_${days}`;
+      if (!sessionStorage.getItem(notifKey)) {
+        addNotification({
+          title: `Overdue Penalty — Day ${days}`,
+          message: `Your booking for ${b.car} is ${days} day(s) overdue. Current penalty: $${amount}. Please return the car and pay the penalty.`,
+          type: 'penalty',
+        });
+        sessionStorage.setItem(notifKey, 'true');
+      }
+    });
+  }, [bookings, getOverduePenalty, addNotification]);
 
   if (!isAuthenticated) return null;
 
@@ -90,32 +107,33 @@ const MyBookings = () => {
   };
 
   const handlePayPenalty = (booking: BookingItem) => {
-    toast({ title: 'Processing Payment 💳', description: `Processing penalty payment of $${booking.penaltyAmount} for ${booking.car}...` });
+    // Get current real-time penalty for overdue
+    const currentAmount = booking.status === 'overdue' ? getOverduePenalty(booking).amount : booking.penaltyAmount;
+    toast({ title: 'Processing Payment 💳', description: `Processing penalty payment of $${currentAmount} for ${booking.car}...` });
     setTimeout(() => {
       payPenalty(booking.id);
-      addNotification({ title: 'Penalty Paid', message: `Your penalty of $${booking.penaltyAmount} for ${booking.car} has been paid successfully.`, type: 'success' });
-      toast({ title: 'Penalty Paid! ✅', description: `$${booking.penaltyAmount} penalty for ${booking.car} has been paid.` });
+      addNotification({ title: 'Penalty Paid', message: `Your penalty of $${currentAmount} for ${booking.car} has been paid successfully.`, type: 'success' });
+      toast({ title: 'Penalty Paid! ✅', description: `$${currentAmount} penalty for ${booking.car} has been paid.` });
     }, 2000);
   };
 
   const showPayPenalty = (booking: BookingItem) => {
-    if (booking.penaltyPaid || booking.penaltyAmount <= 0) return false;
-    if (booking.status === 'completed') return false;
+    if (booking.penaltyPaid || booking.status === 'completed') return false;
     if (booking.status === 'overdue') return true;
-    if (['active', 'upcoming'].includes(booking.status) && booking.penaltyAmount > 0 && booking.penaltyType) return true;
+    if (booking.penaltyAmount > 0 && booking.penaltyType && booking.penaltySource === 'admin') return true;
     return false;
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 border-yellow-500/30';
-      case 'confirmed': return 'bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/30';
-      case 'upcoming': return 'bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/30';
-      case 'active': return 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30';
-      case 'completed': return 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30';
-      case 'cancelled': return 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-500/30';
-      case 'failed': return 'bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-500/30';
-      case 'overdue': return 'bg-rose-600/20 text-rose-700 dark:text-rose-400 border-rose-600/30';
+      case 'pending': return 'bg-amber-500/20 text-amber-600 dark:text-amber-300 border-amber-500/30';
+      case 'confirmed': return 'bg-blue-500/20 text-blue-600 dark:text-blue-300 border-blue-500/30';
+      case 'upcoming': return 'bg-blue-500/20 text-blue-600 dark:text-blue-300 border-blue-500/30';
+      case 'active': return 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border-emerald-500/30';
+      case 'completed': return 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border-emerald-500/30';
+      case 'cancelled': return 'bg-slate-500/20 text-slate-600 dark:text-slate-300 border-slate-500/30';
+      case 'failed': return 'bg-orange-500/20 text-orange-600 dark:text-orange-300 border-orange-500/30';
+      case 'overdue': return 'bg-rose-500/20 text-rose-600 dark:text-rose-300 border-rose-500/30';
       default: return 'bg-muted text-muted-foreground border-border';
     }
   };
@@ -126,15 +144,9 @@ const MyBookings = () => {
     return bookings.filter((b) => b.status === status);
   };
 
-  const getOverdueDays = (booking: BookingItem) => {
-    if (booking.status !== 'overdue') return 0;
-    const now = new Date();
-    const endDate = new Date(booking.returnDate);
-    return Math.max(1, Math.ceil((now.getTime() - endDate.getTime()) / 86400000));
-  };
-
   const BookingCard = ({ booking }: { booking: BookingItem }) => {
-    const overdueDays = getOverdueDays(booking);
+    const overdue = getOverduePenalty(booking);
+    const displayPenalty = booking.status === 'overdue' && !booking.penaltyPaid ? overdue.amount : booking.penaltyAmount;
 
     return (
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} whileHover={{ scale: 1.01, y: -2 }} transition={{ duration: 0.3 }}>
@@ -153,14 +165,14 @@ const MyBookings = () => {
                     </Badge>
                   </div>
                   <div className="text-left sm:text-right">
-                    {booking.penaltyAmount > 0 ? (
+                    {displayPenalty > 0 ? (
                       <div className="space-y-1">
                         <p className="text-sm text-muted-foreground">Base: <span className="font-medium">${booking.baseCost}</span></p>
-                        <p className="text-sm text-rose-600 dark:text-rose-400 font-semibold">
-                          Penalty: +${booking.penaltyAmount}
-                          {booking.status === 'overdue' && <span className="text-xs ml-1">({overdueDays} days × $50)</span>}
+                        <p className="text-sm text-amber-600 dark:text-amber-300 font-semibold">
+                          Penalty: +${displayPenalty}
+                          {booking.status === 'overdue' && <span className="text-xs ml-1">({overdue.days}d × $50)</span>}
                         </p>
-                        <p className="text-xl font-bold text-primary">${booking.baseCost + booking.penaltyAmount}</p>
+                        <p className="text-xl font-bold text-primary">${booking.baseCost + displayPenalty}</p>
                       </div>
                     ) : (
                       <>
@@ -169,7 +181,7 @@ const MyBookings = () => {
                       </>
                     )}
                     {booking.refundAmount > 0 && (
-                      <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 font-medium">Refund: ${booking.refundAmount} ({booking.refundStatus})</p>
+                      <p className="text-xs text-emerald-600 dark:text-emerald-300 mt-1 font-medium">Refund: ${booking.refundAmount} ({booking.refundStatus})</p>
                     )}
                   </div>
                 </div>
@@ -189,12 +201,12 @@ const MyBookings = () => {
                 </div>
 
                 {/* Penalty info banner */}
-                {booking.penaltyAmount > 0 && !booking.penaltyPaid && booking.status !== 'completed' && booking.status !== 'cancelled' && (
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20">
-                    <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 flex-shrink-0" />
-                    <p className="text-sm text-rose-700 dark:text-rose-300">
-                      <span className="font-semibold">Penalty: ${booking.penaltyAmount}</span>
-                      {booking.penaltyType === 'late_return' && ` — Overdue ${overdueDays} day(s) at $50/day`}
+                {displayPenalty > 0 && !booking.penaltyPaid && booking.status !== 'completed' && booking.status !== 'cancelled' && (
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-300 flex-shrink-0" />
+                    <p className="text-sm text-amber-700 dark:text-amber-200">
+                      <span className="font-semibold">Penalty: ${displayPenalty}</span>
+                      {booking.penaltyType === 'late_return' && ` — Overdue ${overdue.days} day(s) at $50/day`}
                       {booking.penaltyType === 'damage' && ' — Vehicle Damage'}
                       {booking.penaltyType === 'fuel_empty' && ' — Empty Fuel Tank'}
                       {booking.penaltyType === 'dirty_return' && ' — Dirty Vehicle'}
@@ -221,20 +233,20 @@ const MyBookings = () => {
                   </Button>
 
                   {showPayPenalty(booking) && (
-                    <Button size="sm" className="bg-rose-600 hover:bg-rose-700 text-white"
+                    <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white"
                       onClick={() => handlePayPenalty(booking)}>
-                      <AlertTriangle className="w-3 h-3 mr-1" /> Pay Penalty (${booking.penaltyAmount})
+                      <DollarSign className="w-3 h-3 mr-1" /> Pay Penalty (${displayPenalty})
                     </Button>
                   )}
                   {booking.penaltyPaid && booking.penaltyAmount > 0 && (
-                    <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30">Penalty Paid ✅</Badge>
+                    <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border-emerald-500/30">Penalty Paid ✅</Badge>
                   )}
 
                   {booking.refundStatus === 'refunded' && (
-                    <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30">Refunded ${booking.refundAmount}</Badge>
+                    <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border-emerald-500/30">Refunded ${booking.refundAmount}</Badge>
                   )}
                   {booking.refundStatus === 'processing' && (
-                    <Badge className="bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 border-yellow-500/30">Refund Processing</Badge>
+                    <Badge className="bg-amber-500/20 text-amber-600 dark:text-amber-300 border-amber-500/30">Refund Processing</Badge>
                   )}
                 </div>
               </div>
@@ -305,9 +317,9 @@ const MyBookings = () => {
               <DialogDescription>
                 Are you sure you want to cancel your booking for <strong>{bookingToCancel?.car}</strong>?
                 <br /><br />
-                <span className="text-rose-600 dark:text-rose-400 font-medium">A 10% cancellation fee (${bookingToCancel ? Math.round(bookingToCancel.baseCost * 0.10) : 0}) will be deducted.</span>
+                <span className="text-amber-600 dark:text-amber-300 font-medium">A 10% cancellation fee (${bookingToCancel ? Math.round(bookingToCancel.baseCost * 0.10) : 0}) will be deducted.</span>
                 <br />
-                <span className="text-emerald-600 dark:text-emerald-400">You will be refunded ${bookingToCancel ? bookingToCancel.baseCost - Math.round(bookingToCancel.baseCost * 0.10) : 0}.</span>
+                <span className="text-emerald-600 dark:text-emerald-300">You will be refunded ${bookingToCancel ? bookingToCancel.baseCost - Math.round(bookingToCancel.baseCost * 0.10) : 0}.</span>
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="gap-2">

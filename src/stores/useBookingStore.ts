@@ -44,7 +44,6 @@ interface BookingStore {
   cancelBooking: (id: number) => void;
   payPenalty: (id: number) => void;
   applyAdminPenalty: (id: number, penaltyType: string, amount: number) => void;
-  applyOverduePenalty: (id: number) => void;
   allowBooking: (id: number) => void;
   rejectBooking: (id: number) => void;
   completeBooking: (id: number) => boolean;
@@ -54,6 +53,7 @@ interface BookingStore {
   // Selectors
   getBookingsForUser: (email: string) => BookingItem[];
   getAllBookings: () => BookingItem[];
+  getOverduePenalty: (booking: BookingItem) => { days: number; amount: number };
 }
 
 export const useBookingStore = create<BookingStore>((set, get) => ({
@@ -110,6 +110,7 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
         return {
           ...b,
           penaltyPaid: true,
+          // Admin penalty → auto-complete; system overdue → stays, admin must click complete
           ...(isAdminPenalty ? { status: 'completed' as BookingStatus } : {}),
         };
       })
@@ -120,20 +121,6 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
     set(state => ({
       bookings: state.bookings.map(b =>
         b.id === id ? { ...b, penaltyType, penaltyAmount: amount, penaltySource: 'admin' as const, penaltyPaid: false } : b
-      )
-    }));
-  },
-
-  applyOverduePenalty: (id) => {
-    const booking = get().bookings.find(b => b.id === id);
-    if (!booking) return;
-    const now = new Date();
-    const endDate = new Date(booking.returnDate);
-    const daysLate = Math.max(1, Math.ceil((now.getTime() - endDate.getTime()) / 86400000));
-    const totalPenalty = daysLate * 50;
-    set(state => ({
-      bookings: state.bookings.map(b =>
-        b.id === id ? { ...b, penaltyAmount: totalPenalty, penaltyType: 'late_return', penaltySource: 'system' as const } : b
       )
     }));
   },
@@ -158,6 +145,7 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
   completeBooking: (id) => {
     const booking = get().bookings.find(b => b.id === id);
     if (!booking) return false;
+    // For overdue: if penalty not paid, can't complete normally
     if (booking.status === 'overdue' && !booking.penaltyPaid) return false;
     set(state => ({
       bookings: state.bookings.map(b => b.id === id ? { ...b, status: 'completed' as BookingStatus } : b)
@@ -189,12 +177,35 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
         if (b.status === 'upcoming' && now >= startDate && b.carProblem) {
           return { ...b, status: 'failed' as BookingStatus, refundAmount: b.baseCost, refundStatus: 'processing' as const };
         }
+        // Active → overdue when past return date
         if (b.status === 'active' && now > endDate) {
-          const daysLate = Math.ceil((now.getTime() - endDate.getTime()) / 86400000);
+          // Check if there's a next booking for same car — limit overdue days to gap
+          const nextBooking = state.bookings
+            .filter(nb => nb.carId === b.carId && nb.id !== b.id && nb.status === 'upcoming' && new Date(nb.pickupDate) > endDate)
+            .sort((a, c) => new Date(a.pickupDate).getTime() - new Date(c.pickupDate).getTime())[0];
+
+          let daysLate: number;
+          if (nextBooking) {
+            const gapDays = Math.ceil((new Date(nextBooking.pickupDate).getTime() - endDate.getTime()) / 86400000);
+            daysLate = Math.min(Math.ceil((now.getTime() - endDate.getTime()) / 86400000), gapDays);
+          } else {
+            daysLate = Math.ceil((now.getTime() - endDate.getTime()) / 86400000);
+          }
           return { ...b, status: 'overdue' as BookingStatus, penaltyAmount: daysLate * 50, penaltyType: 'late_return', penaltySource: 'system' as const };
         }
+        // Update overdue penalty day by day
         if (b.status === 'overdue' && !b.penaltyPaid) {
-          const daysLate = Math.ceil((now.getTime() - endDate.getTime()) / 86400000);
+          const nextBooking = state.bookings
+            .filter(nb => nb.carId === b.carId && nb.id !== b.id && nb.status === 'upcoming' && new Date(nb.pickupDate) > endDate)
+            .sort((a, c) => new Date(a.pickupDate).getTime() - new Date(c.pickupDate).getTime())[0];
+
+          let daysLate: number;
+          if (nextBooking) {
+            const gapDays = Math.ceil((new Date(nextBooking.pickupDate).getTime() - endDate.getTime()) / 86400000);
+            daysLate = Math.min(Math.ceil((now.getTime() - endDate.getTime()) / 86400000), gapDays);
+          } else {
+            daysLate = Math.ceil((now.getTime() - endDate.getTime()) / 86400000);
+          }
           const newPenalty = daysLate * 50;
           if (newPenalty !== b.penaltyAmount) return { ...b, penaltyAmount: newPenalty };
         }
@@ -208,4 +219,12 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
   },
 
   getAllBookings: () => get().bookings,
+
+  getOverduePenalty: (booking) => {
+    if (booking.status !== 'overdue') return { days: 0, amount: 0 };
+    const now = new Date();
+    const endDate = new Date(booking.returnDate);
+    const days = Math.max(1, Math.ceil((now.getTime() - endDate.getTime()) / 86400000));
+    return { days, amount: days * 50 };
+  },
 }));
