@@ -166,7 +166,7 @@ const ManageBookings = () => {
 
   // Determine which buttons to show
   const showCompleteBtn = (b: typeof bookings[0]) => b.status === 'active' || b.status === 'overdue';
-  const showPenaltyBtn = (b: typeof bookings[0]) => (b.status === 'active' || b.status === 'overdue') && b.status !== 'completed';
+  const showPenaltyBtn = (b: typeof bookings[0]) => b.status === 'active' || b.status === 'overdue';
   const showAllowBtn = (b: typeof bookings[0]) => b.status === 'upcoming' || b.status === 'pending';
   const showRejectBtn = (b: typeof bookings[0]) => b.status === 'upcoming' || b.status === 'pending';
 
